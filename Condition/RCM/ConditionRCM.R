@@ -83,6 +83,11 @@ for (fl in CPUEFleets) {
   )
 }
 
+# Remove fleets that do not have CPUE
+no_CPUE <- setdiff(1:nFleet, CPUEData$Fleet)
+RCMData@Index <- RCMData@Index[, -no_CPUE]
+RCMData@I_sd <- RCMData@I_sd[, -no_CPUE]
+
 # ----- CAL Data ----
 CALData <- readxl::read_excel('Data/SALB_2018.xlsx', "CAL")
 
@@ -167,13 +172,16 @@ OM_Base@LFS <- c(80, 90)
 OM_Base@Vmaxlen <- c(1,1)
 
 
-OM_Base@R0 <- 10000 # initial value 
+OM_Base@R0 <- 1e5 # initial value, need high R0
 
 # ---- Condition Base Case OM ----
 
-RCM_Base <- RCM(OM_Base, RCMData)
+RCM_Base <- RCM(OM_Base, RCMData, 
+                condition = "catch2",       # Model runs faster if F are not parameters
+                s_selectivity = c(1, 4, 8), # Assign index selectivity to corresponding fleet
+                mean_fit = TRUE)
 
-plot(RCM_Base)
+plot(RCM_Base, s_name = c("Chinese Taipei LL", "Japan LL", "Uruguay LL"))
 
 
 # Alternative Assumptions:
