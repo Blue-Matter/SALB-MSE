@@ -83,10 +83,15 @@ for (fl in CPUEFleets) {
   )
 }
 
+MinIndCV <- 0.2
+
+RCMData@I_sd <- pmax(RCMData@I_sd, MinIndCV) 
+
 # Remove fleets that do not have CPUE
 no_CPUE <- setdiff(1:nFleet, CPUEData$Fleet)
 RCMData@Index <- RCMData@Index[, -no_CPUE]
 RCMData@I_sd <- RCMData@I_sd[, -no_CPUE]
+
 
 # ----- CAL Data ----
 CALData <- readxl::read_excel('Data/SALB_2018.xlsx', "CAL")
@@ -119,73 +124,114 @@ RCMData@CAL_ESS <- pmin(apply(RCMData@CAL, c(1, 3), sum, na.rm = TRUE), CAL_ESS)
 RCMData@CAL_ESS[RCMData@CAL_ESS==0] <- NA
 RCMData@length_bin <- length_bin
 
+
+CAL <- array2DF(RCMData@CAL)
+CAL$Year <- as.numeric(CAL$Year)
+CAL$Class <- as.numeric(CAL$Class)
+CAL$Fleet <- as.numeric(CAL$Fleet)
+
+CALsum <- CAL |> dplyr::group_by(Class) |>
+  dplyr::summarise(n=sum(Value, na.rm=TRUE))
+
+ggplot(CALsum, aes(x=Class, y=n)) +
+  geom_bar(stat='identity') +
+  theme_bw()
+
+CAL$Fleet |> unique()
+
+ggplot(CAL |> dplyr::filter(Fleet==1), aes(x=Class, y=Value)) +
+  facet_wrap(~Year, scales='free_y') +
+  geom_line() +
+  theme_bw()
+
+
+
+
 # ---- Base Case OM Parameters -----
 
 OM_Base <- new("OM")
 OM_Base@nyears <- nYears
-OM_Base@nsim <- 2
+OM_Base@nsim <- 10
 OM_Base@Species <- "Thunnus alalunga"
 OM_Base@maxage <- 20
 OM_Base@CurrentYr <- 2018
 
 # Natural Mortality, Linf, K, t0, 
-OM_Base <- LH2OM(OM_Base) # direct from FishBase via FishLife
+OM_Base@Linf <- rep(130, 2) # c(124.74, 147.5) # range from ICCAT Manual 2.1.4 ALB
+OM_Base@K <- rep(0.15,2) # c(0.126, 0.23)
+OM_Base@t0 <- rep(-0.5,2) # c(-1.89, -0.989) # range from ICCAT Manual 2.1.4 ALB
 
-OM_Base@t0 <- c(-1.89, -0.98) # range from ICCAT Manual 2.1.4 ALB
-# Growth spans uncertainty in ICCAT Manual 2.1.4 ALB
-# L50 mean pretty close to that reported in SCRS/2024/156
+OM_Base@M <- rep(0.3, 2) # c(0.25, 0.35) # assumed uniform distribution around 0.3 assumption in SCRS/2024/156
 
-OM_Base@cpars$L95 <- OM_Base@cpars$L50 * 1.16 # ratio reported in SCRS/2024/156
+OM_Base@L50 <- c(90, 90) # SCRS/2024/156
+OM_Base@L50_95 <- c(4,4) # ratio reported in SCRS/2024/156
 
 # Length-Weight relationship
 OM_Base@a <- 1.3718E-5
 OM_Base@b <- 3.09773 # Penney (1994) from ICCAT Manual 2.1.4 ALB
 
 # Steepness
-OM_Base@h <- c(0.75, 0.9) # uniform distribution borrowed from North Atlantic Albacore MSE https://www.iccat.int/Documents/CVSP/CV076_2019/n_8/CV07608051.pdf
+OM_Base@h <- rep(0.9,2)#  c(0.75, 0.9) # uniform distribution borrowed from North Atlantic Albacore MSE https://www.iccat.int/Documents/CVSP/CV076_2019/n_8/CV07608051.pdf
 
 # Stock-Recruit Relationship
 OM_Base@SRrel <- 1 # Beverton Holt SRR
 
 # Process Error
-OM_Base@Perr <- c(0.2, 0.4) # uniform distribution - assumed based on nothing in particular
+OM_Base@Perr <- rep(0.5, 2) # c(0.3, 0.6) # uniform distribution - assumed based on nothing in particular
 
 # Selectivity Starting Values 
-CAL <- array2DF(RCMData@CAL)
-CAL$Year <- as.numeric(CAL$Year)
-CAL$Class <- as.numeric(CAL$Class)
-CAL$Fleet <- as.numeric(CAL$Fleet)
-
-CAL <- CAL |> dplyr::group_by(Class) |>
-  dplyr::summarise(n=sum(Value, na.rm=TRUE))
-
-
-ggplot(CAL, aes(x=Class, y=n)) +
-  geom_line() +
-  theme_bw()
-
-CAL$Class[which.max(CAL$n)]
-
-# initial starting values - estimated by fleet in RCM
-OM_Base@L5 <- c(50, 60)
-OM_Base@LFS <- c(80, 90)
-OM_Base@Vmaxlen <- c(1,1)
+CALsum$Class[which.max(CALsum$n)]
 
 
 OM_Base@R0 <- 1e5 # initial value, need high R0
 
 # ---- Condition Base Case OM ----
 
-RCM_Base <- RCM(OM_Base, RCMData, 
-                condition = "catch2",       # Model runs faster if F are not parameters
-                s_selectivity = c(1, 4, 8), # Assign index selectivity to corresponding fleet
-                mean_fit = TRUE)
 
-plot(RCM_Base, s_name = c("Chinese Taipei LL", "Japan LL", "Uruguay LL"))
+start
+
+RCM_Base_logisitic <- RCM(OM_Base, RCMData, 
+                          condition = "catch2",       # Model runs faster if F are not parameters
+                          selectivity = 'logistic_length',
+                          s_selectivity = c(1, 4, 8), # Assign index selectivity to corresponding fleet
+                          mean_fit = TRUE,
+                          start=start)
+
+sum(!RCM_Base_logisitic@conv)/OM_Base@nsim
+
+plot(RCM_Base_logisitic, s_name = c("Chinese Taipei LL", "Japan LL", "Uruguay LL"))
+
+# Assuming:
+# Long Line LL - logistic
+# Purse Seine - dome 
+# Bait Boat - dome 
+
+selectivity <- c("logistic_length", # LL
+                 "logistic_length", # LL
+                 "logistic_length", # LL 
+                 "logistic_length", # LL
+                 "logistic_length", # LL
+                 "dome_length", # PS & BB
+                 "dome_length", # PS & BB
+                 "logistic_length")  # LL
+
+RCM_Base_dome <- RCM(OM_Base, RCMData, 
+                          condition = "catch2",       # Model runs faster if F are not parameters
+                          selectivity = selectivity,
+                          s_selectivity = c(1, 4, 8), # Assign index selectivity to corresponding fleet
+                          mean_fit = TRUE)
+
+sum(!RCM_Base_dome@conv)/OM_Base@nsim
+
+plot(RCM_Base_dome, s_name = c("Chinese Taipei LL", "Japan LL", "Uruguay LL"))
+
+
+
 
 
 # Alternative Assumptions:
-# 1. Age-dependent M
+# - Age-dependent M
+# - different selectivity patterns
 
 
 
