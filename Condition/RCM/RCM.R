@@ -98,7 +98,7 @@ Base_Mean <- RCM(OM_Base, RCMData,
                    max_F=10,
                    mean_fit = TRUE)
 
-saveRDS(Base_Mean, 'Condition/RCM/Base_Mean.rda')
+saveRDS(Base_Mean, 'Condition/RCM/Base_Mean.rcm')
 
 
 plot(Base_Mean, filename='Base_Mean', dir='Condition/RCM')
@@ -114,7 +114,7 @@ Base_Stochastic <- RCM(OM_Base_Stochastic, RCMData,
                    max_F=10,
                    mean_fit = TRUE)
 
-saveRDS(Base_Stochastic, 'Condition/RCM/Base_Stochastic.rda')
+saveRDS(Base_Stochastic, 'Condition/RCM/Base_Stochastic.rcm')
 
 plot(Base_Stochastic, filename='Base_Stochastic', dir='Condition/RCM')
 
