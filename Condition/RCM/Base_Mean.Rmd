@@ -1,0 +1,1902 @@
+---
+title: "Operating model (OM) conditioning report for `r ifelse(nchar(OM@Name) > 0, OM@Name, substitute(x))`"
+subtitle: Output from SAMtool Rapid Conditioning Model (RCM)
+date: "`r Sys.Date()`"
+---
+<style type="text/css">
+h1 { /* Header 1 */
+  font-size: 24px;
+}
+</style>
+
+```{r setup, include = FALSE, echo = FALSE}
+  knitr::opts_chunk$set(collapse = TRUE, echo = FALSE, message = FALSE,
+  fig.width = 6, fig.height = 4.5, out.width = "650px", comment = "#>")
+```
+
+# Summary {.tabset}
+
+## Operating model {.tabset}
+
+### Updated parameters
+
+```{r, fig.cap = "Histogram of R0 (unfished recruitment)."}
+if (!is.null(OM@cpars$R0)) hist(OM@cpars$R0, main = "", xlab = expression(R[0]))
+```
+
+```{r, fig.cap = "Histogram of historical depletion."}
+if (!is.null(OM@cpars$D)) hist(OM@cpars$D, main = "", xlab = "Depletion")
+```
+
+```{r, fig.cap = "Historical recruitment deviations among simulations."}
+Perr <- OM@cpars$Perr_y[, (max_age+1):(max_age+nyears), drop = FALSE]
+matplot(Year, t(Perr), type = "l", col = "black", xlab = "Year", ylab = "Recruitment deviations",
+        ylim = c(0, 1.1 * max(Perr)), zero_line = TRUE)
+```
+
+
+```{r, fig.cap = "Future recruitment deviations (up to 5 simulations)."}
+Perr_future <- OM@cpars$Perr_y[, (max_age+nyears+1):(max_age+nyears+proyears)]
+matplot(Year, t(Perr), type = "l", col = "black", xlab = "Year", ylab = "Recruitment deviations",
+        xlim = c(min(Year), max(Year) + proyears), ylim = c(0, 1.1 * max(c(Perr, Perr_future))), zero_line = TRUE)
+matlines(max(Year) + 1:proyears, t(Perr_future[1:min(5, nrow(OM@cpars$Perr_y)), ]), type = "l")
+abline(v = max(Year), lty = 3)
+```
+
+
+```{r, fig.cap = "Annual mean and median of future recruitment deviations."}
+matplot(Year, t(Perr), type = "n", xlab = "Year", ylab = "Recruitment deviations",
+        xlim = c(min(Year), max(Year) + proyears), ylim = c(0, 1.1 * max(c(Perr, Perr_future))))
+abline(h = c(0, 1), col = "grey")
+abline(v = max(Year), lty = 3)
+matlines(Year, t(Perr), type = "l", col = "black")
+lines(max(Year) + 1:proyears, apply(Perr_future, 2, mean), col = "red")
+lines(max(Year) + 1:proyears, apply(Perr_future, 2, median), lty = 2)
+legend("topleft", c("Mean", "Median"), col = c("red", "black"), lty = c(1, 2), bty = "n")
+```
+
+```{r, fig.cap = "Histogram of recruitment autocorrelation."}
+if (!is.null(OM@cpars$AC)) hist(OM@cpars$AC, main = "", xlab = "Recruitment Autocorrelation")
+```
+
+```{r, fig.cap = "Apical F from RCM model."}
+matplot(Year, t(OM@cpars$Find), type = "l", col = "black", xlab = "Year", ylab = "Apical F", zero_line = TRUE)
+```
+
+```{r, fig.cap = "Operating model selectivity in the last historical year (all simulations)."}
+vul <- sapply(report_list, getElement, "vul_len")
+if (nsim == 1) V_plot <- matrix(OM@cpars$V[, , nyears], 1, byrow = TRUE) else V_plot <- OM@cpars$V[, , nyears]
+matplot(Age, t(V_plot), type = "l", col = "black", xlab = "Age", ylab = "Selectivity", ylim = c(0, 1.1), zero_line = TRUE)
+```
+
+### RCM-OM comparison
+
+Re-run `plot()` function with argument `compare = TRUE`.
+
+
+## RCM output {.tabset}
+
+
+### Simulations
+
+`r sim_summary`
+
+
+###  Fleet 1 
+
+```{r, fig.cap = "Length selectivity of Fleet 1."}
+bl <- unique(RCMdata@sel_block[, 1])
+vul_bb <- list()
+bl_col <- gplots::rich.colors(length(bl))
+Year_legend <- character(length(bl))
+for(bb in 1:length(bl)) {
+  vul_bb[[bb]] <- sapply(report_list, function(x) if (!is.null(x$vul_len)) x$vul_len[, bl[bb]] else NA)
+  Year_legend[bb] <- Year[RCMdata@sel_block[, 1] == bl[bb]] %>% range() %>% paste(collapse = "-")
+}
+test <- vapply(vul_bb, function(x) all(!is.na(x)) && sum(x), logical(1))
+if (any(test)) {
+  matplot(RCMdata@Misc$lbinmid, RCMdata@Misc$lbinmid, type = "n", xlab = "Length", ylim = c(0, 1), ylab = "Selectivity of Fleet 1", zero_line = TRUE)
+  if (length(bl) > 1) {
+    for(bb in 1:length(bl)) {
+      if (test[bb]) matlines(RCMdata@Misc$lbinmid, vul_bb[[bb]], type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+    }
+    legend("topright", Year_legend, col = bl_col, lwd = 1, bty = "n")
+  } else {
+    matlines(RCMdata@Misc$lbinmid, vul_bb[[1]], type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+    if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+  }
+}
+```
+
+
+```{r, fig.cap = "Age-based selectivity of Fleet 1."}
+matplot(Age, Age, type = "n", xlab = "Age", ylim = c(0, 1), ylab = "Selectivity of Fleet 1", zero_line = TRUE)
+
+for(bb in 1:length(bl)) {
+  vul_bb_age <- do.call(rbind, lapply(report_list, function(x) x$vul[RCMdata@sel_block[, 1] == bl[bb], , 1])) %>% t()
+  if (length(bl) > 1) {
+    matlines(Age, vul_bb_age, type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+  } else {
+    matlines(Age, vul_bb_age, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+  }
+}
+if (length(bl) > 1) {
+  legend("topleft", Year_legend, col = bl_col, lwd = 1, bty = "n")
+} else if (!is.null(scenario$names)) {
+  legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+}
+```
+
+
+```{r, fig.cap = "Fishing Mortality of Fleet 1."}
+FM <- sapply(report_list, function(x) x$F[, 1])
+matplot(Year, FM, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(FM, na.rm = TRUE)), xlab = "Year", ylab = "Fishing Mortality of Fleet 1", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from Fleet 1."}
+if (any(RCMdata@Chist > 0, na.rm = TRUE)) {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 1])
+  Chist <- RCMdata@Chist[, 1]
+  ylim <- c(0.9, 1.1) * range(c(Cpred, Chist), na.rm = TRUE)
+  plot(Year, Chist, type = "o", xlab = "Year", ylab = "Catch of Fleet 1", ylim = ylim)
+  matlines(Year, Cpred, col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+} else {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 1]/mean(x$Cpred[, 1]))
+  matplot(Year, Cpred, col = scenario$col, type = "l", lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Predicted relative catch of Fleet 1", zero_line = TRUE)
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean ages from Fleet 1."}
+MApred <- sapply(report_list, function(x) x$CAApred[, , 1] %*% Age/x$CN[, 1])
+MAobs <- (RCMdata@CAA[, , 1] %*% Age)/rowSums(RCMdata@CAA[, , 1], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MApred, MAobs), na.rm = TRUE)
+matplot(Year, MApred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean age", ylim = ylim)
+if (any(RCMdata@CAA[, , 1] > 0, na.rm = TRUE)) {
+  lines(Year, MAobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean lengths from Fleet 1."}
+if (RCMdata@MS_type == "length" && any(RCMdata@MS[, 1] > 0, na.rm = TRUE)) {
+  MLobs <- RCMdata@MS[, 1]
+  MLpred <- sapply(report_list, function(x) x$MLpred[, 1])
+} else if (any(RCMdata@CAL[, , 1] > 0, na.rm = TRUE)) {
+  MLobs <- (RCMdata@CAL[, , 1] %*% RCMdata@Misc$lbinmid)/rowSums(RCMdata@CAL[, , 1], na.rm = TRUE)
+  MLpred <- sapply(report_list, function(x) (x$CALpred[, , 1] %*% RCMdata@Misc$lbinmid)/rowSums(x$CAL[, , 1], na.rm = TRUE))
+} else {
+ MLobs <- MLpred <- NA
+}
+if (!all(is.na(MLpred))) {
+  ylim <- c(0.9, 1.1) * range(c(MLpred, MLobs), na.rm = TRUE)
+  matplot(Year, MLpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean length", ylim = ylim)
+  lines(Year, MLobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean weights from Fleet 1."}
+if (RCMdata@MS_type == "weight" && any(RCMdata@MS[, 1] > 0, na.rm = TRUE)) {
+  MWobs <- RCMdata@MS[, 1]
+} else MWobs <- NA
+if (!all(is.na(MWobs))) {
+  MWpred <- sapply(report_list, function(x) x$MWpred[, 1])
+  ylim <- c(0.9, 1.1) * range(c(MWpred, MWobs), na.rm = TRUE)
+  matplot(Year, MWpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean weight", ylim = ylim)
+  lines(Year, MWobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) age composition from Fleet 1."}
+if (any(RCMdata@CAA[, , 1] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 1], RCMdata@CAA[, , 1], N = round(RCMdata@CAA_ESS[, 1], 1), ages = Age, dat_col = scenario$col)
+}
+```
+
+```{r, fig.cap = "Predicted age composition from Fleet 1."}
+if (any(RCMdata@CAA[, , 1] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 1], ages = Age, dat_col = scenario$col)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 1."}
+if (any(RCMdata@CAL[, , 1] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, fit = CAL_plot <- x@CAL[, , , 1], dat = RCMdata@CAL[, , 1], N = round(RCMdata@CAL_ESS[, 1], 1), CAL_bins = length_bin, dat_col = scenario$col)
+}
+```
+
+###  Fleet 2 
+
+```{r, fig.cap = "Length selectivity of Fleet 2."}
+bl <- unique(RCMdata@sel_block[, 2])
+vul_bb <- list()
+bl_col <- gplots::rich.colors(length(bl))
+Year_legend <- character(length(bl))
+for(bb in 1:length(bl)) {
+  vul_bb[[bb]] <- sapply(report_list, function(x) if (!is.null(x$vul_len)) x$vul_len[, bl[bb]] else NA)
+  Year_legend[bb] <- Year[RCMdata@sel_block[, 2] == bl[bb]] %>% range() %>% paste(collapse = "-")
+}
+test <- vapply(vul_bb, function(x) all(!is.na(x)) && sum(x), logical(1))
+if (any(test)) {
+  matplot(RCMdata@Misc$lbinmid, RCMdata@Misc$lbinmid, type = "n", xlab = "Length", ylim = c(0, 1), ylab = "Selectivity of Fleet 2", zero_line = TRUE)
+  if (length(bl) > 1) {
+    for(bb in 1:length(bl)) {
+      if (test[bb]) matlines(RCMdata@Misc$lbinmid, vul_bb[[bb]], type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+    }
+    legend("topright", Year_legend, col = bl_col, lwd = 1, bty = "n")
+  } else {
+    matlines(RCMdata@Misc$lbinmid, vul_bb[[1]], type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+    if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+  }
+}
+```
+
+
+```{r, fig.cap = "Age-based selectivity of Fleet 2."}
+matplot(Age, Age, type = "n", xlab = "Age", ylim = c(0, 1), ylab = "Selectivity of Fleet 2", zero_line = TRUE)
+
+for(bb in 1:length(bl)) {
+  vul_bb_age <- do.call(rbind, lapply(report_list, function(x) x$vul[RCMdata@sel_block[, 2] == bl[bb], , 2])) %>% t()
+  if (length(bl) > 1) {
+    matlines(Age, vul_bb_age, type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+  } else {
+    matlines(Age, vul_bb_age, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+  }
+}
+if (length(bl) > 1) {
+  legend("topleft", Year_legend, col = bl_col, lwd = 1, bty = "n")
+} else if (!is.null(scenario$names)) {
+  legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+}
+```
+
+
+```{r, fig.cap = "Fishing Mortality of Fleet 2."}
+FM <- sapply(report_list, function(x) x$F[, 2])
+matplot(Year, FM, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(FM, na.rm = TRUE)), xlab = "Year", ylab = "Fishing Mortality of Fleet 2", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from Fleet 2."}
+if (any(RCMdata@Chist > 0, na.rm = TRUE)) {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 2])
+  Chist <- RCMdata@Chist[, 2]
+  ylim <- c(0.9, 1.1) * range(c(Cpred, Chist), na.rm = TRUE)
+  plot(Year, Chist, type = "o", xlab = "Year", ylab = "Catch of Fleet 2", ylim = ylim)
+  matlines(Year, Cpred, col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+} else {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 2]/mean(x$Cpred[, 2]))
+  matplot(Year, Cpred, col = scenario$col, type = "l", lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Predicted relative catch of Fleet 2", zero_line = TRUE)
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean ages from Fleet 2."}
+MApred <- sapply(report_list, function(x) x$CAApred[, , 2] %*% Age/x$CN[, 2])
+MAobs <- (RCMdata@CAA[, , 2] %*% Age)/rowSums(RCMdata@CAA[, , 2], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MApred, MAobs), na.rm = TRUE)
+matplot(Year, MApred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean age", ylim = ylim)
+if (any(RCMdata@CAA[, , 2] > 0, na.rm = TRUE)) {
+  lines(Year, MAobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean lengths from Fleet 2."}
+if (RCMdata@MS_type == "length" && any(RCMdata@MS[, 2] > 0, na.rm = TRUE)) {
+  MLobs <- RCMdata@MS[, 2]
+  MLpred <- sapply(report_list, function(x) x$MLpred[, 2])
+} else if (any(RCMdata@CAL[, , 2] > 0, na.rm = TRUE)) {
+  MLobs <- (RCMdata@CAL[, , 2] %*% RCMdata@Misc$lbinmid)/rowSums(RCMdata@CAL[, , 2], na.rm = TRUE)
+  MLpred <- sapply(report_list, function(x) (x$CALpred[, , 2] %*% RCMdata@Misc$lbinmid)/rowSums(x$CAL[, , 2], na.rm = TRUE))
+} else {
+ MLobs <- MLpred <- NA
+}
+if (!all(is.na(MLpred))) {
+  ylim <- c(0.9, 1.1) * range(c(MLpred, MLobs), na.rm = TRUE)
+  matplot(Year, MLpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean length", ylim = ylim)
+  lines(Year, MLobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean weights from Fleet 2."}
+if (RCMdata@MS_type == "weight" && any(RCMdata@MS[, 2] > 0, na.rm = TRUE)) {
+  MWobs <- RCMdata@MS[, 2]
+} else MWobs <- NA
+if (!all(is.na(MWobs))) {
+  MWpred <- sapply(report_list, function(x) x$MWpred[, 2])
+  ylim <- c(0.9, 1.1) * range(c(MWpred, MWobs), na.rm = TRUE)
+  matplot(Year, MWpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean weight", ylim = ylim)
+  lines(Year, MWobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) age composition from Fleet 2."}
+if (any(RCMdata@CAA[, , 2] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 2], RCMdata@CAA[, , 2], N = round(RCMdata@CAA_ESS[, 2], 1), ages = Age, dat_col = scenario$col)
+}
+```
+
+```{r, fig.cap = "Predicted age composition from Fleet 2."}
+if (any(RCMdata@CAA[, , 2] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 2], ages = Age, dat_col = scenario$col)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 2."}
+if (any(RCMdata@CAL[, , 2] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, fit = CAL_plot <- x@CAL[, , , 2], dat = RCMdata@CAL[, , 2], N = round(RCMdata@CAL_ESS[, 2], 1), CAL_bins = length_bin, dat_col = scenario$col)
+}
+```
+
+###  Fleet 3 
+
+```{r, fig.cap = "Length selectivity of Fleet 3."}
+bl <- unique(RCMdata@sel_block[, 3])
+vul_bb <- list()
+bl_col <- gplots::rich.colors(length(bl))
+Year_legend <- character(length(bl))
+for(bb in 1:length(bl)) {
+  vul_bb[[bb]] <- sapply(report_list, function(x) if (!is.null(x$vul_len)) x$vul_len[, bl[bb]] else NA)
+  Year_legend[bb] <- Year[RCMdata@sel_block[, 3] == bl[bb]] %>% range() %>% paste(collapse = "-")
+}
+test <- vapply(vul_bb, function(x) all(!is.na(x)) && sum(x), logical(1))
+if (any(test)) {
+  matplot(RCMdata@Misc$lbinmid, RCMdata@Misc$lbinmid, type = "n", xlab = "Length", ylim = c(0, 1), ylab = "Selectivity of Fleet 3", zero_line = TRUE)
+  if (length(bl) > 1) {
+    for(bb in 1:length(bl)) {
+      if (test[bb]) matlines(RCMdata@Misc$lbinmid, vul_bb[[bb]], type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+    }
+    legend("topright", Year_legend, col = bl_col, lwd = 1, bty = "n")
+  } else {
+    matlines(RCMdata@Misc$lbinmid, vul_bb[[1]], type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+    if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+  }
+}
+```
+
+
+```{r, fig.cap = "Age-based selectivity of Fleet 3."}
+matplot(Age, Age, type = "n", xlab = "Age", ylim = c(0, 1), ylab = "Selectivity of Fleet 3", zero_line = TRUE)
+
+for(bb in 1:length(bl)) {
+  vul_bb_age <- do.call(rbind, lapply(report_list, function(x) x$vul[RCMdata@sel_block[, 3] == bl[bb], , 3])) %>% t()
+  if (length(bl) > 1) {
+    matlines(Age, vul_bb_age, type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+  } else {
+    matlines(Age, vul_bb_age, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+  }
+}
+if (length(bl) > 1) {
+  legend("topleft", Year_legend, col = bl_col, lwd = 1, bty = "n")
+} else if (!is.null(scenario$names)) {
+  legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+}
+```
+
+
+```{r, fig.cap = "Fishing Mortality of Fleet 3."}
+FM <- sapply(report_list, function(x) x$F[, 3])
+matplot(Year, FM, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(FM, na.rm = TRUE)), xlab = "Year", ylab = "Fishing Mortality of Fleet 3", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from Fleet 3."}
+if (any(RCMdata@Chist > 0, na.rm = TRUE)) {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 3])
+  Chist <- RCMdata@Chist[, 3]
+  ylim <- c(0.9, 1.1) * range(c(Cpred, Chist), na.rm = TRUE)
+  plot(Year, Chist, type = "o", xlab = "Year", ylab = "Catch of Fleet 3", ylim = ylim)
+  matlines(Year, Cpred, col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+} else {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 3]/mean(x$Cpred[, 3]))
+  matplot(Year, Cpred, col = scenario$col, type = "l", lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Predicted relative catch of Fleet 3", zero_line = TRUE)
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean ages from Fleet 3."}
+MApred <- sapply(report_list, function(x) x$CAApred[, , 3] %*% Age/x$CN[, 3])
+MAobs <- (RCMdata@CAA[, , 3] %*% Age)/rowSums(RCMdata@CAA[, , 3], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MApred, MAobs), na.rm = TRUE)
+matplot(Year, MApred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean age", ylim = ylim)
+if (any(RCMdata@CAA[, , 3] > 0, na.rm = TRUE)) {
+  lines(Year, MAobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean lengths from Fleet 3."}
+if (RCMdata@MS_type == "length" && any(RCMdata@MS[, 3] > 0, na.rm = TRUE)) {
+  MLobs <- RCMdata@MS[, 3]
+  MLpred <- sapply(report_list, function(x) x$MLpred[, 3])
+} else if (any(RCMdata@CAL[, , 3] > 0, na.rm = TRUE)) {
+  MLobs <- (RCMdata@CAL[, , 3] %*% RCMdata@Misc$lbinmid)/rowSums(RCMdata@CAL[, , 3], na.rm = TRUE)
+  MLpred <- sapply(report_list, function(x) (x$CALpred[, , 3] %*% RCMdata@Misc$lbinmid)/rowSums(x$CAL[, , 3], na.rm = TRUE))
+} else {
+ MLobs <- MLpred <- NA
+}
+if (!all(is.na(MLpred))) {
+  ylim <- c(0.9, 1.1) * range(c(MLpred, MLobs), na.rm = TRUE)
+  matplot(Year, MLpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean length", ylim = ylim)
+  lines(Year, MLobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean weights from Fleet 3."}
+if (RCMdata@MS_type == "weight" && any(RCMdata@MS[, 3] > 0, na.rm = TRUE)) {
+  MWobs <- RCMdata@MS[, 3]
+} else MWobs <- NA
+if (!all(is.na(MWobs))) {
+  MWpred <- sapply(report_list, function(x) x$MWpred[, 3])
+  ylim <- c(0.9, 1.1) * range(c(MWpred, MWobs), na.rm = TRUE)
+  matplot(Year, MWpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean weight", ylim = ylim)
+  lines(Year, MWobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) age composition from Fleet 3."}
+if (any(RCMdata@CAA[, , 3] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 3], RCMdata@CAA[, , 3], N = round(RCMdata@CAA_ESS[, 3], 1), ages = Age, dat_col = scenario$col)
+}
+```
+
+```{r, fig.cap = "Predicted age composition from Fleet 3."}
+if (any(RCMdata@CAA[, , 3] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 3], ages = Age, dat_col = scenario$col)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 3."}
+if (any(RCMdata@CAL[, , 3] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, fit = CAL_plot <- x@CAL[, , , 3], dat = RCMdata@CAL[, , 3], N = round(RCMdata@CAL_ESS[, 3], 1), CAL_bins = length_bin, dat_col = scenario$col)
+}
+```
+
+###  Fleet 4 
+
+```{r, fig.cap = "Length selectivity of Fleet 4."}
+bl <- unique(RCMdata@sel_block[, 4])
+vul_bb <- list()
+bl_col <- gplots::rich.colors(length(bl))
+Year_legend <- character(length(bl))
+for(bb in 1:length(bl)) {
+  vul_bb[[bb]] <- sapply(report_list, function(x) if (!is.null(x$vul_len)) x$vul_len[, bl[bb]] else NA)
+  Year_legend[bb] <- Year[RCMdata@sel_block[, 4] == bl[bb]] %>% range() %>% paste(collapse = "-")
+}
+test <- vapply(vul_bb, function(x) all(!is.na(x)) && sum(x), logical(1))
+if (any(test)) {
+  matplot(RCMdata@Misc$lbinmid, RCMdata@Misc$lbinmid, type = "n", xlab = "Length", ylim = c(0, 1), ylab = "Selectivity of Fleet 4", zero_line = TRUE)
+  if (length(bl) > 1) {
+    for(bb in 1:length(bl)) {
+      if (test[bb]) matlines(RCMdata@Misc$lbinmid, vul_bb[[bb]], type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+    }
+    legend("topright", Year_legend, col = bl_col, lwd = 1, bty = "n")
+  } else {
+    matlines(RCMdata@Misc$lbinmid, vul_bb[[1]], type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+    if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+  }
+}
+```
+
+
+```{r, fig.cap = "Age-based selectivity of Fleet 4."}
+matplot(Age, Age, type = "n", xlab = "Age", ylim = c(0, 1), ylab = "Selectivity of Fleet 4", zero_line = TRUE)
+
+for(bb in 1:length(bl)) {
+  vul_bb_age <- do.call(rbind, lapply(report_list, function(x) x$vul[RCMdata@sel_block[, 4] == bl[bb], , 4])) %>% t()
+  if (length(bl) > 1) {
+    matlines(Age, vul_bb_age, type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+  } else {
+    matlines(Age, vul_bb_age, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+  }
+}
+if (length(bl) > 1) {
+  legend("topleft", Year_legend, col = bl_col, lwd = 1, bty = "n")
+} else if (!is.null(scenario$names)) {
+  legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+}
+```
+
+
+```{r, fig.cap = "Fishing Mortality of Fleet 4."}
+FM <- sapply(report_list, function(x) x$F[, 4])
+matplot(Year, FM, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(FM, na.rm = TRUE)), xlab = "Year", ylab = "Fishing Mortality of Fleet 4", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from Fleet 4."}
+if (any(RCMdata@Chist > 0, na.rm = TRUE)) {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 4])
+  Chist <- RCMdata@Chist[, 4]
+  ylim <- c(0.9, 1.1) * range(c(Cpred, Chist), na.rm = TRUE)
+  plot(Year, Chist, type = "o", xlab = "Year", ylab = "Catch of Fleet 4", ylim = ylim)
+  matlines(Year, Cpred, col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+} else {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 4]/mean(x$Cpred[, 4]))
+  matplot(Year, Cpred, col = scenario$col, type = "l", lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Predicted relative catch of Fleet 4", zero_line = TRUE)
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean ages from Fleet 4."}
+MApred <- sapply(report_list, function(x) x$CAApred[, , 4] %*% Age/x$CN[, 4])
+MAobs <- (RCMdata@CAA[, , 4] %*% Age)/rowSums(RCMdata@CAA[, , 4], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MApred, MAobs), na.rm = TRUE)
+matplot(Year, MApred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean age", ylim = ylim)
+if (any(RCMdata@CAA[, , 4] > 0, na.rm = TRUE)) {
+  lines(Year, MAobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean lengths from Fleet 4."}
+if (RCMdata@MS_type == "length" && any(RCMdata@MS[, 4] > 0, na.rm = TRUE)) {
+  MLobs <- RCMdata@MS[, 4]
+  MLpred <- sapply(report_list, function(x) x$MLpred[, 4])
+} else if (any(RCMdata@CAL[, , 4] > 0, na.rm = TRUE)) {
+  MLobs <- (RCMdata@CAL[, , 4] %*% RCMdata@Misc$lbinmid)/rowSums(RCMdata@CAL[, , 4], na.rm = TRUE)
+  MLpred <- sapply(report_list, function(x) (x$CALpred[, , 4] %*% RCMdata@Misc$lbinmid)/rowSums(x$CAL[, , 4], na.rm = TRUE))
+} else {
+ MLobs <- MLpred <- NA
+}
+if (!all(is.na(MLpred))) {
+  ylim <- c(0.9, 1.1) * range(c(MLpred, MLobs), na.rm = TRUE)
+  matplot(Year, MLpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean length", ylim = ylim)
+  lines(Year, MLobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean weights from Fleet 4."}
+if (RCMdata@MS_type == "weight" && any(RCMdata@MS[, 4] > 0, na.rm = TRUE)) {
+  MWobs <- RCMdata@MS[, 4]
+} else MWobs <- NA
+if (!all(is.na(MWobs))) {
+  MWpred <- sapply(report_list, function(x) x$MWpred[, 4])
+  ylim <- c(0.9, 1.1) * range(c(MWpred, MWobs), na.rm = TRUE)
+  matplot(Year, MWpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean weight", ylim = ylim)
+  lines(Year, MWobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) age composition from Fleet 4."}
+if (any(RCMdata@CAA[, , 4] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 4], RCMdata@CAA[, , 4], N = round(RCMdata@CAA_ESS[, 4], 1), ages = Age, dat_col = scenario$col)
+}
+```
+
+```{r, fig.cap = "Predicted age composition from Fleet 4."}
+if (any(RCMdata@CAA[, , 4] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 4], ages = Age, dat_col = scenario$col)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 4."}
+if (any(RCMdata@CAL[, , 4] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, fit = CAL_plot <- x@CAL[, , , 4], dat = RCMdata@CAL[, , 4], N = round(RCMdata@CAL_ESS[, 4], 1), CAL_bins = length_bin, dat_col = scenario$col)
+}
+```
+
+###  Fleet 5 
+
+```{r, fig.cap = "Length selectivity of Fleet 5."}
+bl <- unique(RCMdata@sel_block[, 5])
+vul_bb <- list()
+bl_col <- gplots::rich.colors(length(bl))
+Year_legend <- character(length(bl))
+for(bb in 1:length(bl)) {
+  vul_bb[[bb]] <- sapply(report_list, function(x) if (!is.null(x$vul_len)) x$vul_len[, bl[bb]] else NA)
+  Year_legend[bb] <- Year[RCMdata@sel_block[, 5] == bl[bb]] %>% range() %>% paste(collapse = "-")
+}
+test <- vapply(vul_bb, function(x) all(!is.na(x)) && sum(x), logical(1))
+if (any(test)) {
+  matplot(RCMdata@Misc$lbinmid, RCMdata@Misc$lbinmid, type = "n", xlab = "Length", ylim = c(0, 1), ylab = "Selectivity of Fleet 5", zero_line = TRUE)
+  if (length(bl) > 1) {
+    for(bb in 1:length(bl)) {
+      if (test[bb]) matlines(RCMdata@Misc$lbinmid, vul_bb[[bb]], type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+    }
+    legend("topright", Year_legend, col = bl_col, lwd = 1, bty = "n")
+  } else {
+    matlines(RCMdata@Misc$lbinmid, vul_bb[[1]], type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+    if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+  }
+}
+```
+
+
+```{r, fig.cap = "Age-based selectivity of Fleet 5."}
+matplot(Age, Age, type = "n", xlab = "Age", ylim = c(0, 1), ylab = "Selectivity of Fleet 5", zero_line = TRUE)
+
+for(bb in 1:length(bl)) {
+  vul_bb_age <- do.call(rbind, lapply(report_list, function(x) x$vul[RCMdata@sel_block[, 5] == bl[bb], , 5])) %>% t()
+  if (length(bl) > 1) {
+    matlines(Age, vul_bb_age, type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+  } else {
+    matlines(Age, vul_bb_age, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+  }
+}
+if (length(bl) > 1) {
+  legend("topleft", Year_legend, col = bl_col, lwd = 1, bty = "n")
+} else if (!is.null(scenario$names)) {
+  legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+}
+```
+
+
+```{r, fig.cap = "Fishing Mortality of Fleet 5."}
+FM <- sapply(report_list, function(x) x$F[, 5])
+matplot(Year, FM, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(FM, na.rm = TRUE)), xlab = "Year", ylab = "Fishing Mortality of Fleet 5", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from Fleet 5."}
+if (any(RCMdata@Chist > 0, na.rm = TRUE)) {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 5])
+  Chist <- RCMdata@Chist[, 5]
+  ylim <- c(0.9, 1.1) * range(c(Cpred, Chist), na.rm = TRUE)
+  plot(Year, Chist, type = "o", xlab = "Year", ylab = "Catch of Fleet 5", ylim = ylim)
+  matlines(Year, Cpred, col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+} else {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 5]/mean(x$Cpred[, 5]))
+  matplot(Year, Cpred, col = scenario$col, type = "l", lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Predicted relative catch of Fleet 5", zero_line = TRUE)
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean ages from Fleet 5."}
+MApred <- sapply(report_list, function(x) x$CAApred[, , 5] %*% Age/x$CN[, 5])
+MAobs <- (RCMdata@CAA[, , 5] %*% Age)/rowSums(RCMdata@CAA[, , 5], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MApred, MAobs), na.rm = TRUE)
+matplot(Year, MApred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean age", ylim = ylim)
+if (any(RCMdata@CAA[, , 5] > 0, na.rm = TRUE)) {
+  lines(Year, MAobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean lengths from Fleet 5."}
+if (RCMdata@MS_type == "length" && any(RCMdata@MS[, 5] > 0, na.rm = TRUE)) {
+  MLobs <- RCMdata@MS[, 5]
+  MLpred <- sapply(report_list, function(x) x$MLpred[, 5])
+} else if (any(RCMdata@CAL[, , 5] > 0, na.rm = TRUE)) {
+  MLobs <- (RCMdata@CAL[, , 5] %*% RCMdata@Misc$lbinmid)/rowSums(RCMdata@CAL[, , 5], na.rm = TRUE)
+  MLpred <- sapply(report_list, function(x) (x$CALpred[, , 5] %*% RCMdata@Misc$lbinmid)/rowSums(x$CAL[, , 5], na.rm = TRUE))
+} else {
+ MLobs <- MLpred <- NA
+}
+if (!all(is.na(MLpred))) {
+  ylim <- c(0.9, 1.1) * range(c(MLpred, MLobs), na.rm = TRUE)
+  matplot(Year, MLpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean length", ylim = ylim)
+  lines(Year, MLobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean weights from Fleet 5."}
+if (RCMdata@MS_type == "weight" && any(RCMdata@MS[, 5] > 0, na.rm = TRUE)) {
+  MWobs <- RCMdata@MS[, 5]
+} else MWobs <- NA
+if (!all(is.na(MWobs))) {
+  MWpred <- sapply(report_list, function(x) x$MWpred[, 5])
+  ylim <- c(0.9, 1.1) * range(c(MWpred, MWobs), na.rm = TRUE)
+  matplot(Year, MWpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean weight", ylim = ylim)
+  lines(Year, MWobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) age composition from Fleet 5."}
+if (any(RCMdata@CAA[, , 5] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 5], RCMdata@CAA[, , 5], N = round(RCMdata@CAA_ESS[, 5], 1), ages = Age, dat_col = scenario$col)
+}
+```
+
+```{r, fig.cap = "Predicted age composition from Fleet 5."}
+if (any(RCMdata@CAA[, , 5] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 5], ages = Age, dat_col = scenario$col)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 5."}
+if (any(RCMdata@CAL[, , 5] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, fit = CAL_plot <- x@CAL[, , , 5], dat = RCMdata@CAL[, , 5], N = round(RCMdata@CAL_ESS[, 5], 1), CAL_bins = length_bin, dat_col = scenario$col)
+}
+```
+
+###  Fleet 6 
+
+```{r, fig.cap = "Length selectivity of Fleet 6."}
+bl <- unique(RCMdata@sel_block[, 6])
+vul_bb <- list()
+bl_col <- gplots::rich.colors(length(bl))
+Year_legend <- character(length(bl))
+for(bb in 1:length(bl)) {
+  vul_bb[[bb]] <- sapply(report_list, function(x) if (!is.null(x$vul_len)) x$vul_len[, bl[bb]] else NA)
+  Year_legend[bb] <- Year[RCMdata@sel_block[, 6] == bl[bb]] %>% range() %>% paste(collapse = "-")
+}
+test <- vapply(vul_bb, function(x) all(!is.na(x)) && sum(x), logical(1))
+if (any(test)) {
+  matplot(RCMdata@Misc$lbinmid, RCMdata@Misc$lbinmid, type = "n", xlab = "Length", ylim = c(0, 1), ylab = "Selectivity of Fleet 6", zero_line = TRUE)
+  if (length(bl) > 1) {
+    for(bb in 1:length(bl)) {
+      if (test[bb]) matlines(RCMdata@Misc$lbinmid, vul_bb[[bb]], type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+    }
+    legend("topright", Year_legend, col = bl_col, lwd = 1, bty = "n")
+  } else {
+    matlines(RCMdata@Misc$lbinmid, vul_bb[[1]], type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+    if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+  }
+}
+```
+
+
+```{r, fig.cap = "Age-based selectivity of Fleet 6."}
+matplot(Age, Age, type = "n", xlab = "Age", ylim = c(0, 1), ylab = "Selectivity of Fleet 6", zero_line = TRUE)
+
+for(bb in 1:length(bl)) {
+  vul_bb_age <- do.call(rbind, lapply(report_list, function(x) x$vul[RCMdata@sel_block[, 6] == bl[bb], , 6])) %>% t()
+  if (length(bl) > 1) {
+    matlines(Age, vul_bb_age, type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+  } else {
+    matlines(Age, vul_bb_age, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+  }
+}
+if (length(bl) > 1) {
+  legend("topleft", Year_legend, col = bl_col, lwd = 1, bty = "n")
+} else if (!is.null(scenario$names)) {
+  legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+}
+```
+
+
+```{r, fig.cap = "Fishing Mortality of Fleet 6."}
+FM <- sapply(report_list, function(x) x$F[, 6])
+matplot(Year, FM, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(FM, na.rm = TRUE)), xlab = "Year", ylab = "Fishing Mortality of Fleet 6", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from Fleet 6."}
+if (any(RCMdata@Chist > 0, na.rm = TRUE)) {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 6])
+  Chist <- RCMdata@Chist[, 6]
+  ylim <- c(0.9, 1.1) * range(c(Cpred, Chist), na.rm = TRUE)
+  plot(Year, Chist, type = "o", xlab = "Year", ylab = "Catch of Fleet 6", ylim = ylim)
+  matlines(Year, Cpred, col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+} else {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 6]/mean(x$Cpred[, 6]))
+  matplot(Year, Cpred, col = scenario$col, type = "l", lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Predicted relative catch of Fleet 6", zero_line = TRUE)
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean ages from Fleet 6."}
+MApred <- sapply(report_list, function(x) x$CAApred[, , 6] %*% Age/x$CN[, 6])
+MAobs <- (RCMdata@CAA[, , 6] %*% Age)/rowSums(RCMdata@CAA[, , 6], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MApred, MAobs), na.rm = TRUE)
+matplot(Year, MApred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean age", ylim = ylim)
+if (any(RCMdata@CAA[, , 6] > 0, na.rm = TRUE)) {
+  lines(Year, MAobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean lengths from Fleet 6."}
+if (RCMdata@MS_type == "length" && any(RCMdata@MS[, 6] > 0, na.rm = TRUE)) {
+  MLobs <- RCMdata@MS[, 6]
+  MLpred <- sapply(report_list, function(x) x$MLpred[, 6])
+} else if (any(RCMdata@CAL[, , 6] > 0, na.rm = TRUE)) {
+  MLobs <- (RCMdata@CAL[, , 6] %*% RCMdata@Misc$lbinmid)/rowSums(RCMdata@CAL[, , 6], na.rm = TRUE)
+  MLpred <- sapply(report_list, function(x) (x$CALpred[, , 6] %*% RCMdata@Misc$lbinmid)/rowSums(x$CAL[, , 6], na.rm = TRUE))
+} else {
+ MLobs <- MLpred <- NA
+}
+if (!all(is.na(MLpred))) {
+  ylim <- c(0.9, 1.1) * range(c(MLpred, MLobs), na.rm = TRUE)
+  matplot(Year, MLpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean length", ylim = ylim)
+  lines(Year, MLobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean weights from Fleet 6."}
+if (RCMdata@MS_type == "weight" && any(RCMdata@MS[, 6] > 0, na.rm = TRUE)) {
+  MWobs <- RCMdata@MS[, 6]
+} else MWobs <- NA
+if (!all(is.na(MWobs))) {
+  MWpred <- sapply(report_list, function(x) x$MWpred[, 6])
+  ylim <- c(0.9, 1.1) * range(c(MWpred, MWobs), na.rm = TRUE)
+  matplot(Year, MWpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean weight", ylim = ylim)
+  lines(Year, MWobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) age composition from Fleet 6."}
+if (any(RCMdata@CAA[, , 6] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 6], RCMdata@CAA[, , 6], N = round(RCMdata@CAA_ESS[, 6], 1), ages = Age, dat_col = scenario$col)
+}
+```
+
+```{r, fig.cap = "Predicted age composition from Fleet 6."}
+if (any(RCMdata@CAA[, , 6] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 6], ages = Age, dat_col = scenario$col)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 6."}
+if (any(RCMdata@CAL[, , 6] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, fit = CAL_plot <- x@CAL[, , , 6], dat = RCMdata@CAL[, , 6], N = round(RCMdata@CAL_ESS[, 6], 1), CAL_bins = length_bin, dat_col = scenario$col)
+}
+```
+
+###  Fleet 7 
+
+```{r, fig.cap = "Length selectivity of Fleet 7."}
+bl <- unique(RCMdata@sel_block[, 7])
+vul_bb <- list()
+bl_col <- gplots::rich.colors(length(bl))
+Year_legend <- character(length(bl))
+for(bb in 1:length(bl)) {
+  vul_bb[[bb]] <- sapply(report_list, function(x) if (!is.null(x$vul_len)) x$vul_len[, bl[bb]] else NA)
+  Year_legend[bb] <- Year[RCMdata@sel_block[, 7] == bl[bb]] %>% range() %>% paste(collapse = "-")
+}
+test <- vapply(vul_bb, function(x) all(!is.na(x)) && sum(x), logical(1))
+if (any(test)) {
+  matplot(RCMdata@Misc$lbinmid, RCMdata@Misc$lbinmid, type = "n", xlab = "Length", ylim = c(0, 1), ylab = "Selectivity of Fleet 7", zero_line = TRUE)
+  if (length(bl) > 1) {
+    for(bb in 1:length(bl)) {
+      if (test[bb]) matlines(RCMdata@Misc$lbinmid, vul_bb[[bb]], type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+    }
+    legend("topright", Year_legend, col = bl_col, lwd = 1, bty = "n")
+  } else {
+    matlines(RCMdata@Misc$lbinmid, vul_bb[[1]], type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+    if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+  }
+}
+```
+
+
+```{r, fig.cap = "Age-based selectivity of Fleet 7."}
+matplot(Age, Age, type = "n", xlab = "Age", ylim = c(0, 1), ylab = "Selectivity of Fleet 7", zero_line = TRUE)
+
+for(bb in 1:length(bl)) {
+  vul_bb_age <- do.call(rbind, lapply(report_list, function(x) x$vul[RCMdata@sel_block[, 7] == bl[bb], , 7])) %>% t()
+  if (length(bl) > 1) {
+    matlines(Age, vul_bb_age, type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+  } else {
+    matlines(Age, vul_bb_age, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+  }
+}
+if (length(bl) > 1) {
+  legend("topleft", Year_legend, col = bl_col, lwd = 1, bty = "n")
+} else if (!is.null(scenario$names)) {
+  legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+}
+```
+
+
+```{r, fig.cap = "Fishing Mortality of Fleet 7."}
+FM <- sapply(report_list, function(x) x$F[, 7])
+matplot(Year, FM, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(FM, na.rm = TRUE)), xlab = "Year", ylab = "Fishing Mortality of Fleet 7", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from Fleet 7."}
+if (any(RCMdata@Chist > 0, na.rm = TRUE)) {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 7])
+  Chist <- RCMdata@Chist[, 7]
+  ylim <- c(0.9, 1.1) * range(c(Cpred, Chist), na.rm = TRUE)
+  plot(Year, Chist, type = "o", xlab = "Year", ylab = "Catch of Fleet 7", ylim = ylim)
+  matlines(Year, Cpred, col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+} else {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 7]/mean(x$Cpred[, 7]))
+  matplot(Year, Cpred, col = scenario$col, type = "l", lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Predicted relative catch of Fleet 7", zero_line = TRUE)
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean ages from Fleet 7."}
+MApred <- sapply(report_list, function(x) x$CAApred[, , 7] %*% Age/x$CN[, 7])
+MAobs <- (RCMdata@CAA[, , 7] %*% Age)/rowSums(RCMdata@CAA[, , 7], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MApred, MAobs), na.rm = TRUE)
+matplot(Year, MApred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean age", ylim = ylim)
+if (any(RCMdata@CAA[, , 7] > 0, na.rm = TRUE)) {
+  lines(Year, MAobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean lengths from Fleet 7."}
+if (RCMdata@MS_type == "length" && any(RCMdata@MS[, 7] > 0, na.rm = TRUE)) {
+  MLobs <- RCMdata@MS[, 7]
+  MLpred <- sapply(report_list, function(x) x$MLpred[, 7])
+} else if (any(RCMdata@CAL[, , 7] > 0, na.rm = TRUE)) {
+  MLobs <- (RCMdata@CAL[, , 7] %*% RCMdata@Misc$lbinmid)/rowSums(RCMdata@CAL[, , 7], na.rm = TRUE)
+  MLpred <- sapply(report_list, function(x) (x$CALpred[, , 7] %*% RCMdata@Misc$lbinmid)/rowSums(x$CAL[, , 7], na.rm = TRUE))
+} else {
+ MLobs <- MLpred <- NA
+}
+if (!all(is.na(MLpred))) {
+  ylim <- c(0.9, 1.1) * range(c(MLpred, MLobs), na.rm = TRUE)
+  matplot(Year, MLpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean length", ylim = ylim)
+  lines(Year, MLobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean weights from Fleet 7."}
+if (RCMdata@MS_type == "weight" && any(RCMdata@MS[, 7] > 0, na.rm = TRUE)) {
+  MWobs <- RCMdata@MS[, 7]
+} else MWobs <- NA
+if (!all(is.na(MWobs))) {
+  MWpred <- sapply(report_list, function(x) x$MWpred[, 7])
+  ylim <- c(0.9, 1.1) * range(c(MWpred, MWobs), na.rm = TRUE)
+  matplot(Year, MWpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean weight", ylim = ylim)
+  lines(Year, MWobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) age composition from Fleet 7."}
+if (any(RCMdata@CAA[, , 7] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 7], RCMdata@CAA[, , 7], N = round(RCMdata@CAA_ESS[, 7], 1), ages = Age, dat_col = scenario$col)
+}
+```
+
+```{r, fig.cap = "Predicted age composition from Fleet 7."}
+if (any(RCMdata@CAA[, , 7] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 7], ages = Age, dat_col = scenario$col)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 7."}
+if (any(RCMdata@CAL[, , 7] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, fit = CAL_plot <- x@CAL[, , , 7], dat = RCMdata@CAL[, , 7], N = round(RCMdata@CAL_ESS[, 7], 1), CAL_bins = length_bin, dat_col = scenario$col)
+}
+```
+
+###  Fleet 8 
+
+```{r, fig.cap = "Length selectivity of Fleet 8."}
+bl <- unique(RCMdata@sel_block[, 8])
+vul_bb <- list()
+bl_col <- gplots::rich.colors(length(bl))
+Year_legend <- character(length(bl))
+for(bb in 1:length(bl)) {
+  vul_bb[[bb]] <- sapply(report_list, function(x) if (!is.null(x$vul_len)) x$vul_len[, bl[bb]] else NA)
+  Year_legend[bb] <- Year[RCMdata@sel_block[, 8] == bl[bb]] %>% range() %>% paste(collapse = "-")
+}
+test <- vapply(vul_bb, function(x) all(!is.na(x)) && sum(x), logical(1))
+if (any(test)) {
+  matplot(RCMdata@Misc$lbinmid, RCMdata@Misc$lbinmid, type = "n", xlab = "Length", ylim = c(0, 1), ylab = "Selectivity of Fleet 8", zero_line = TRUE)
+  if (length(bl) > 1) {
+    for(bb in 1:length(bl)) {
+      if (test[bb]) matlines(RCMdata@Misc$lbinmid, vul_bb[[bb]], type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+    }
+    legend("topright", Year_legend, col = bl_col, lwd = 1, bty = "n")
+  } else {
+    matlines(RCMdata@Misc$lbinmid, vul_bb[[1]], type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+    if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+  }
+}
+```
+
+
+```{r, fig.cap = "Age-based selectivity of Fleet 8."}
+matplot(Age, Age, type = "n", xlab = "Age", ylim = c(0, 1), ylab = "Selectivity of Fleet 8", zero_line = TRUE)
+
+for(bb in 1:length(bl)) {
+  vul_bb_age <- do.call(rbind, lapply(report_list, function(x) x$vul[RCMdata@sel_block[, 8] == bl[bb], , 8])) %>% t()
+  if (length(bl) > 1) {
+    matlines(Age, vul_bb_age, type = "l", col = bl_col[bb], lty = scenario$lty, lwd = scenario$lwd)
+  } else {
+    matlines(Age, vul_bb_age, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+  }
+}
+if (length(bl) > 1) {
+  legend("topleft", Year_legend, col = bl_col, lwd = 1, bty = "n")
+} else if (!is.null(scenario$names)) {
+  legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd, bty = "n")
+}
+```
+
+
+```{r, fig.cap = "Fishing Mortality of Fleet 8."}
+FM <- sapply(report_list, function(x) x$F[, 8])
+matplot(Year, FM, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(FM, na.rm = TRUE)), xlab = "Year", ylab = "Fishing Mortality of Fleet 8", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from Fleet 8."}
+if (any(RCMdata@Chist > 0, na.rm = TRUE)) {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 8])
+  Chist <- RCMdata@Chist[, 8]
+  ylim <- c(0.9, 1.1) * range(c(Cpred, Chist), na.rm = TRUE)
+  plot(Year, Chist, type = "o", xlab = "Year", ylab = "Catch of Fleet 8", ylim = ylim)
+  matlines(Year, Cpred, col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+} else {
+  Cpred <- sapply(report_list, function(x) x$Cpred[, 8]/mean(x$Cpred[, 8]))
+  matplot(Year, Cpred, col = scenario$col, type = "l", lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Predicted relative catch of Fleet 8", zero_line = TRUE)
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean ages from Fleet 8."}
+MApred <- sapply(report_list, function(x) x$CAApred[, , 8] %*% Age/x$CN[, 8])
+MAobs <- (RCMdata@CAA[, , 8] %*% Age)/rowSums(RCMdata@CAA[, , 8], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MApred, MAobs), na.rm = TRUE)
+matplot(Year, MApred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean age", ylim = ylim)
+if (any(RCMdata@CAA[, , 8] > 0, na.rm = TRUE)) {
+  lines(Year, MAobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean lengths from Fleet 8."}
+if (RCMdata@MS_type == "length" && any(RCMdata@MS[, 8] > 0, na.rm = TRUE)) {
+  MLobs <- RCMdata@MS[, 8]
+  MLpred <- sapply(report_list, function(x) x$MLpred[, 8])
+} else if (any(RCMdata@CAL[, , 8] > 0, na.rm = TRUE)) {
+  MLobs <- (RCMdata@CAL[, , 8] %*% RCMdata@Misc$lbinmid)/rowSums(RCMdata@CAL[, , 8], na.rm = TRUE)
+  MLpred <- sapply(report_list, function(x) (x$CALpred[, , 8] %*% RCMdata@Misc$lbinmid)/rowSums(x$CAL[, , 8], na.rm = TRUE))
+} else {
+ MLobs <- MLpred <- NA
+}
+if (!all(is.na(MLpred))) {
+  ylim <- c(0.9, 1.1) * range(c(MLpred, MLobs), na.rm = TRUE)
+  matplot(Year, MLpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean length", ylim = ylim)
+  lines(Year, MLobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean weights from Fleet 8."}
+if (RCMdata@MS_type == "weight" && any(RCMdata@MS[, 8] > 0, na.rm = TRUE)) {
+  MWobs <- RCMdata@MS[, 8]
+} else MWobs <- NA
+if (!all(is.na(MWobs))) {
+  MWpred <- sapply(report_list, function(x) x$MWpred[, 8])
+  ylim <- c(0.9, 1.1) * range(c(MWpred, MWobs), na.rm = TRUE)
+  matplot(Year, MWpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean weight", ylim = ylim)
+  lines(Year, MWobs, col = "black", typ = "o")
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) age composition from Fleet 8."}
+if (any(RCMdata@CAA[, , 8] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 8], RCMdata@CAA[, , 8], N = round(RCMdata@CAA_ESS[, 8], 1), ages = Age, dat_col = scenario$col)
+}
+```
+
+```{r, fig.cap = "Predicted age composition from Fleet 8."}
+if (any(RCMdata@CAA[, , 8] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, x@CAA[, , , 8], ages = Age, dat_col = scenario$col)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 8."}
+if (any(RCMdata@CAL[, , 8] > 0, na.rm = TRUE)) {
+  plot_composition_RCM(Year, fit = CAL_plot <- x@CAL[, , , 8], dat = RCMdata@CAL[, , 8], N = round(RCMdata@CAL_ESS[, 8], 1), CAL_bins = length_bin, dat_col = scenario$col)
+}
+```
+
+### Index 1 
+
+
+```{r, fig.cap = "Length selectivity of Index 1."}
+ivul_len <- sapply(report_list, function(x) if (!is.null(x$ivul_len)) x$ivul_len[, 
+1
+] else NA)
+if (all(!is.na(ivul_len)) && sum(ivul_len, na.rm = TRUE)) {
+  matplot(RCMdata@Misc$lbinmid, ivul_len, type = "l", xlab = "Length", ylim = c(0, 1), ylab = "Selectivity of Index 1", zero_line = TRUE)
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Age-based selectivity of Index 1 in last historical year."}
+if (!is.null(report_list[[1]]$ivul)) {
+ivul_ff_age <- sapply(report_list, function(x) x$ivul[nyears, , 1])
+matplot(Age, ivul_ff_age, type = "l", col = scenario$col, xlab = "Age", ylim = c(0, 1), ylab = "Selectivity of Index 1", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) index values for Index 1."}
+Ipred <- sapply(report_list, function(x) x$Ipred[, 1])
+matplot(Year, Ipred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(c(Ipred, RCMdata@Index[, 1]), na.rm = TRUE)), xlab = "Year", ylab = "Index 1", zero_line = TRUE)
+lines(Year, RCMdata@Index[, 1], col = "black", typ = "o")
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+log_like <- sapply(report_list, function(x) sum(x$nll_index[, 1, 1]))
+if (!sum(log_like, na.rm=TRUE)) title("**Index not in likelihood**", col.main = "magenta")
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) index values for Index 1. Error bars indicate 95% confidence intervals for observed values."}
+II <- RCMdata@Index[, 1]
+if (any(II > 0, na.rm = TRUE) && length(RCMdata@I_sd)) {
+  ind <- seq(min(which(!is.na(II))), max(which(!is.na(II))), 1)
+  err <- exp(log(II) + outer(RCMdata@I_sd[, 1], c(-1.96, 1.96)))
+  matplot(Year[ind], Ipred[ind, , drop = FALSE], type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(c(Ipred[ind, ], II[ind], err[ind, ]), na.rm = TRUE)), xlab = "Year", ylab = "Index 1", zero_line = TRUE)
+  points(Year[ind], II[ind], lwd = 3, pch = 16)
+  arrows(Year[ind], y0 = err[ind, 1], y1 = err[ind, 2], length = 0, lwd = 1.5)
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+  log_like <- sapply(report_list, function(x) sum(x$nll_index[, 1, 1]))
+  if (!sum(log_like, na.rm=TRUE)) title("**Index not in likelihood**", col.main = "magenta")
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean ages from Index 1."}
+if (length(RCMdata@IAA) && any(RCMdata@IAA[, , 1] > 0, na.rm = TRUE)) {
+MApred <- sapply(report_list, function(x) x$IAApred[, , 1] %*% Age/rowSums(x$IAApred[, , 1]))
+MAobs <- (RCMdata@IAA[, , 1] %*% Age)/rowSums(RCMdata@IAA[, , 1], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MApred, MAobs), na.rm = TRUE)
+matplot(Year, MApred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean age", ylim = ylim)
+if (any(RCMdata@IAA[, , 1] > 0, na.rm = TRUE)) {
+  lines(Year, MAobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean lengths from Index 1."}
+if (length(RCMdata@IAL) && any(RCMdata@IAL[, , 1] > 0, na.rm = TRUE)) {
+MLpred <- sapply(report_list, function(x) x$IALpred[, , 1] %*% RCMdata@Misc$lbinmid/rowSums(x$IAApred[, , 1]))
+MLobs <- (RCMdata@IAL[, , 1] %*% RCMdata@Misc$lbinmid)/rowSums(RCMdata@IAL[, , 1], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MLpred, MLobs), na.rm = TRUE)
+matplot(Year, MLpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean length", ylim = ylim)
+if (any(RCMdata@IAL[, , 1] > 0, na.rm = TRUE)) {
+  lines(Year, MLobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) age composition from Index 1."}
+if (length(RCMdata@IAA) && any(RCMdata@IAA[, , 1] > 0, na.rm = TRUE)) {
+  pred_IAA <- sapply(report_list, function(x) x$IAA[, , 1], simplify = "array") %>% aperm(perm = c(3, 1, 2))
+  plot_composition_RCM(Year, pred_IAA, RCMdata@IAA[, , 1], N = round(RCMdata@IAA_ESS[, 1], 1), ages = Age, dat_col = scenario$col)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Index 1."}
+if (length(RCMdata@IAL) && any(RCMdata@IAL[, , 1] > 0, na.rm = TRUE)) {
+  pred_IAL <- sapply(report_list, function(x) x$IAL[, , 1], simplify = "array") %>% aperm(perm = c(3, 1, 2))
+  plot_composition_RCM(Year, pred_IAL, RCMdata@IAL[, , 1], N = round(RCMdata@IAL_ESS[, 1], 1), CAL_bins = length_bin, dat_col = scenario$col)
+}
+```
+
+### Index 2 
+
+
+```{r, fig.cap = "Length selectivity of Index 2."}
+ivul_len <- sapply(report_list, function(x) if (!is.null(x$ivul_len)) x$ivul_len[, 
+2
+] else NA)
+if (all(!is.na(ivul_len)) && sum(ivul_len, na.rm = TRUE)) {
+  matplot(RCMdata@Misc$lbinmid, ivul_len, type = "l", xlab = "Length", ylim = c(0, 1), ylab = "Selectivity of Index 2", zero_line = TRUE)
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Age-based selectivity of Index 2 in last historical year."}
+if (!is.null(report_list[[1]]$ivul)) {
+ivul_ff_age <- sapply(report_list, function(x) x$ivul[nyears, , 2])
+matplot(Age, ivul_ff_age, type = "l", col = scenario$col, xlab = "Age", ylim = c(0, 1), ylab = "Selectivity of Index 2", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) index values for Index 2."}
+Ipred <- sapply(report_list, function(x) x$Ipred[, 2])
+matplot(Year, Ipred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(c(Ipred, RCMdata@Index[, 2]), na.rm = TRUE)), xlab = "Year", ylab = "Index 2", zero_line = TRUE)
+lines(Year, RCMdata@Index[, 2], col = "black", typ = "o")
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+log_like <- sapply(report_list, function(x) sum(x$nll_index[, 2, 1]))
+if (!sum(log_like, na.rm=TRUE)) title("**Index not in likelihood**", col.main = "magenta")
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) index values for Index 2. Error bars indicate 95% confidence intervals for observed values."}
+II <- RCMdata@Index[, 2]
+if (any(II > 0, na.rm = TRUE) && length(RCMdata@I_sd)) {
+  ind <- seq(min(which(!is.na(II))), max(which(!is.na(II))), 1)
+  err <- exp(log(II) + outer(RCMdata@I_sd[, 2], c(-1.96, 1.96)))
+  matplot(Year[ind], Ipred[ind, , drop = FALSE], type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(c(Ipred[ind, ], II[ind], err[ind, ]), na.rm = TRUE)), xlab = "Year", ylab = "Index 2", zero_line = TRUE)
+  points(Year[ind], II[ind], lwd = 3, pch = 16)
+  arrows(Year[ind], y0 = err[ind, 1], y1 = err[ind, 2], length = 0, lwd = 1.5)
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+  log_like <- sapply(report_list, function(x) sum(x$nll_index[, 2, 1]))
+  if (!sum(log_like, na.rm=TRUE)) title("**Index not in likelihood**", col.main = "magenta")
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean ages from Index 2."}
+if (length(RCMdata@IAA) && any(RCMdata@IAA[, , 2] > 0, na.rm = TRUE)) {
+MApred <- sapply(report_list, function(x) x$IAApred[, , 2] %*% Age/rowSums(x$IAApred[, , 2]))
+MAobs <- (RCMdata@IAA[, , 2] %*% Age)/rowSums(RCMdata@IAA[, , 2], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MApred, MAobs), na.rm = TRUE)
+matplot(Year, MApred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean age", ylim = ylim)
+if (any(RCMdata@IAA[, , 2] > 0, na.rm = TRUE)) {
+  lines(Year, MAobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean lengths from Index 2."}
+if (length(RCMdata@IAL) && any(RCMdata@IAL[, , 2] > 0, na.rm = TRUE)) {
+MLpred <- sapply(report_list, function(x) x$IALpred[, , 2] %*% RCMdata@Misc$lbinmid/rowSums(x$IAApred[, , 2]))
+MLobs <- (RCMdata@IAL[, , 2] %*% RCMdata@Misc$lbinmid)/rowSums(RCMdata@IAL[, , 2], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MLpred, MLobs), na.rm = TRUE)
+matplot(Year, MLpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean length", ylim = ylim)
+if (any(RCMdata@IAL[, , 2] > 0, na.rm = TRUE)) {
+  lines(Year, MLobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) age composition from Index 2."}
+if (length(RCMdata@IAA) && any(RCMdata@IAA[, , 2] > 0, na.rm = TRUE)) {
+  pred_IAA <- sapply(report_list, function(x) x$IAA[, , 2], simplify = "array") %>% aperm(perm = c(3, 1, 2))
+  plot_composition_RCM(Year, pred_IAA, RCMdata@IAA[, , 2], N = round(RCMdata@IAA_ESS[, 2], 1), ages = Age, dat_col = scenario$col)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Index 2."}
+if (length(RCMdata@IAL) && any(RCMdata@IAL[, , 2] > 0, na.rm = TRUE)) {
+  pred_IAL <- sapply(report_list, function(x) x$IAL[, , 2], simplify = "array") %>% aperm(perm = c(3, 1, 2))
+  plot_composition_RCM(Year, pred_IAL, RCMdata@IAL[, , 2], N = round(RCMdata@IAL_ESS[, 2], 1), CAL_bins = length_bin, dat_col = scenario$col)
+}
+```
+
+### Index 3 
+
+
+```{r, fig.cap = "Length selectivity of Index 3."}
+ivul_len <- sapply(report_list, function(x) if (!is.null(x$ivul_len)) x$ivul_len[, 
+3
+] else NA)
+if (all(!is.na(ivul_len)) && sum(ivul_len, na.rm = TRUE)) {
+  matplot(RCMdata@Misc$lbinmid, ivul_len, type = "l", xlab = "Length", ylim = c(0, 1), ylab = "Selectivity of Index 3", zero_line = TRUE)
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Age-based selectivity of Index 3 in last historical year."}
+if (!is.null(report_list[[1]]$ivul)) {
+ivul_ff_age <- sapply(report_list, function(x) x$ivul[nyears, , 3])
+matplot(Age, ivul_ff_age, type = "l", col = scenario$col, xlab = "Age", ylim = c(0, 1), ylab = "Selectivity of Index 3", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) index values for Index 3."}
+Ipred <- sapply(report_list, function(x) x$Ipred[, 3])
+matplot(Year, Ipred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(c(Ipred, RCMdata@Index[, 3]), na.rm = TRUE)), xlab = "Year", ylab = "Index 3", zero_line = TRUE)
+lines(Year, RCMdata@Index[, 3], col = "black", typ = "o")
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+log_like <- sapply(report_list, function(x) sum(x$nll_index[, 3, 1]))
+if (!sum(log_like, na.rm=TRUE)) title("**Index not in likelihood**", col.main = "magenta")
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) index values for Index 3. Error bars indicate 95% confidence intervals for observed values."}
+II <- RCMdata@Index[, 3]
+if (any(II > 0, na.rm = TRUE) && length(RCMdata@I_sd)) {
+  ind <- seq(min(which(!is.na(II))), max(which(!is.na(II))), 1)
+  err <- exp(log(II) + outer(RCMdata@I_sd[, 3], c(-1.96, 1.96)))
+  matplot(Year[ind], Ipred[ind, , drop = FALSE], type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, ylim = c(0, 1.1 * max(c(Ipred[ind, ], II[ind], err[ind, ]), na.rm = TRUE)), xlab = "Year", ylab = "Index 3", zero_line = TRUE)
+  points(Year[ind], II[ind], lwd = 3, pch = 16)
+  arrows(Year[ind], y0 = err[ind, 1], y1 = err[ind, 2], length = 0, lwd = 1.5)
+  if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+  log_like <- sapply(report_list, function(x) sum(x$nll_index[, 3, 1]))
+  if (!sum(log_like, na.rm=TRUE)) title("**Index not in likelihood**", col.main = "magenta")
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean ages from Index 3."}
+if (length(RCMdata@IAA) && any(RCMdata@IAA[, , 3] > 0, na.rm = TRUE)) {
+MApred <- sapply(report_list, function(x) x$IAApred[, , 3] %*% Age/rowSums(x$IAApred[, , 3]))
+MAobs <- (RCMdata@IAA[, , 3] %*% Age)/rowSums(RCMdata@IAA[, , 3], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MApred, MAobs), na.rm = TRUE)
+matplot(Year, MApred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean age", ylim = ylim)
+if (any(RCMdata@IAA[, , 3] > 0, na.rm = TRUE)) {
+  lines(Year, MAobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean lengths from Index 3."}
+if (length(RCMdata@IAL) && any(RCMdata@IAL[, , 3] > 0, na.rm = TRUE)) {
+MLpred <- sapply(report_list, function(x) x$IALpred[, , 3] %*% RCMdata@Misc$lbinmid/rowSums(x$IAApred[, , 3]))
+MLobs <- (RCMdata@IAL[, , 3] %*% RCMdata@Misc$lbinmid)/rowSums(RCMdata@IAL[, , 3], na.rm = TRUE)
+ylim <- c(0.9, 1.1) * range(c(MLpred, MLobs), na.rm = TRUE)
+matplot(Year, MLpred, type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Mean length", ylim = ylim)
+if (any(RCMdata@IAL[, , 3] > 0, na.rm = TRUE)) {
+  lines(Year, MLobs, col = "black", typ = "o")
+}
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) age composition from Index 3."}
+if (length(RCMdata@IAA) && any(RCMdata@IAA[, , 3] > 0, na.rm = TRUE)) {
+  pred_IAA <- sapply(report_list, function(x) x$IAA[, , 3], simplify = "array") %>% aperm(perm = c(3, 1, 2))
+  plot_composition_RCM(Year, pred_IAA, RCMdata@IAA[, , 3], N = round(RCMdata@IAA_ESS[, 3], 1), ages = Age, dat_col = scenario$col)
+}
+```
+
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Index 3."}
+if (length(RCMdata@IAL) && any(RCMdata@IAL[, , 3] > 0, na.rm = TRUE)) {
+  pred_IAL <- sapply(report_list, function(x) x$IAL[, , 3], simplify = "array") %>% aperm(perm = c(3, 1, 2))
+  plot_composition_RCM(Year, pred_IAL, RCMdata@IAL[, , 3], N = round(RCMdata@IAL_ESS[, 3], 1), CAL_bins = length_bin, dat_col = scenario$col)
+}
+```
+
+### Model predictions
+
+```{r, fig.cap = "Histogram of initial depletion among all simulations."}
+initD <- vapply(report_list, function(x) x$E[1]/x$E0_SR, numeric(1))
+hist(initD, main = "", xlab = "Initial depletion")
+```
+
+```{r, fig.cap = "Estimated recruitment among all simulations."}
+R_out <- sapply(report_list, getElement, "R")
+matplot(Yearplusone, R_out, ylim = c(0, 1.1 * max(R_out, na.rm = TRUE)), type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Recruitment", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+```{r, fig.cap = "Estimated spawning biomass among all simulations."}
+E <- sapply(report_list, getElement, "E")
+matplot(Yearplusone, E, ylim = c(0, 1.1 * max(E, na.rm = TRUE)), type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Spawning biomass", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Estimated spawning depletion among all simulations. Unfished spawning biomass is the value calculated from first year life history parameters."}
+E_E0 <- sapply(report_list, function(x) x$E/x$E0_SR)
+matplot(Yearplusone, E_E0, ylim = c(0, 1.1 * max(E_E0, na.rm = TRUE)), type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = "Spawning depletion", zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Dynamic SSB0 among all simulations. Model is re-run assuming no historical catches."}
+dyn_SSB0 <- sapply(report_list, function(x) x$dynamic_SSB0)
+matplot(Yearplusone, dyn_SSB0, ylim = c(0, 1.1 * max(dyn_SSB0, na.rm = TRUE)), type = "l", col = scenario$col, lty = scenario$lty, lwd = scenario$lwd, xlab = "Year", ylab = expression(Dynamic~~SSB[0]), zero_line = TRUE)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+```{r, fig.cap = "Estimated recruitment deviations among all simulations."}
+log_rec_dev2 <- sapply(report_list, getElement, "log_rec_dev")
+matplot(Year, log_rec_dev2, type = "n", xlab = "Year", ylab = "log-recruitment deviations", zero_line = TRUE)
+matlines(Year, log_rec_dev2, col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+```{r, fig.cap = "Equilibrium spawning potential ratio (SPR) calculated from the biological parameters and F-at-age in the corresponding year for all simulations."}
+SPR_eq <- sapply(report_list, getElement, "SPR_eq")
+matplot(Year, SPR_eq, type = "n", ylim = c(0, 1), xlab = "Year", ylab = "Equilibrium SPR", zero_line = TRUE)
+matlines(Year, SPR_eq, col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+
+```{r, fig.cap = "Dynamic spawning potential ratio (SPR) calculated from the biological parameters and cumulative survival of the cohorts in the corresponding year for all simulations."}
+SPR_dyn <- sapply(report_list, getElement, "SPR_dyn")
+matplot(Year, SPR_dyn, type = "n", ylim = c(0, 1), xlab = "Year", ylab = "Dynamic SPR", zero_line = TRUE)
+matlines(Year, SPR_dyn, col = scenario$col, lty = scenario$lty, lwd = scenario$lwd)
+if (!is.null(scenario$names)) legend("topleft", scenario$names, col = scenario$col_legend, lty = scenario$lty, lwd = scenario$lwd)
+```
+
+## Fit to mean parameters of the OM {.tabset}
+
+### RCM Estimates
+
+`r sdreport_int(SD) %>% signif(3) %>% as.data.frame()`
+
+
+### Life History
+
+```{r, fig.cap = "Length-at-age in the last historical year. Dotted lines indicate 95% intervals for variability in length-at-age."}
+SD_low <- data_mean_fit$len_age[nyears, ] - 1.96 * data_mean_fit$SD_LAA[nyears, ]
+SD_high <-  data_mean_fit$len_age[nyears, ] + 1.96 * data_mean_fit$SD_LAA[nyears, ]
+ymax <- 1.1 * max(SD_high)
+plot_generic_at_age(Age, data_mean_fit$len_age[nyears, ], label = "Length-at-age", ymax = 1.1 * ymax)
+lines(Age, SD_low, lty = 3); lines(Age, SD_high, lty = 3)
+```
+
+```{r, fig.cap="Weight-at-length in the last historical year"}
+plot_generic_at_age(length_bin, LW_, label = "Weight", xlab = "Length")
+```
+
+```{r, fig.cap="Weight-at-age in the last historical year."}
+plot_generic_at_age(Age, data_mean_fit$wt[nyears, ], label = "Mean weight-at-age", xlab = "Age")
+```
+
+```{r, fig.cap="Maturity-at-age in the last historical year."}
+plot_generic_at_age(Age, data_mean_fit$mat[nyears, ], label = "Maturity", xlab = "Age")
+```
+
+```{r, fig.cap="Maturity-at-length in the last historical year."}
+plot_generic_at_age(length_bin, mat_len_ogive, label = "Maturity", xlab = "Length")
+```
+
+```{r, fig.cap="Fecundity-at-age (product of spawning output and maturity) in the last historical year."}
+plot_generic_at_age(Age, data_mean_fit$fec[nyears, ], label = "Fecundity", xlab = "Age")
+```
+
+```{r, fig.cap="Natural mortality in last historical year."}
+plot_generic_at_age(Age, data_mean_fit$M[nyears, ], label = "Natural mortality", xlab = "Age")
+```
+
+### Data and Fit {.tabset}
+#### Catch 
+
+```{r, fig.cap = "Catch time series."}
+yy <- RCMdata@Chist
+matplot(Year, RCMdata@Chist, type = "l", lty = 1, col = rich.colors(nfleet), ylim = c(0, 1.1 * max(yy, na.rm = TRUE)), xlab = "Year", ylab = "Catch", zero_line = TRUE)
+if (ncol(yy) > 1) legend("topleft", f_name, text.col = rich.colors(nfleet), bty = "n")
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from fleet 1."}
+plot_timeseries(Year, RCMdata@Chist[, 1], report$Cpred[, 1], NULL, label = "Fleet 1")
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from fleet 2."}
+plot_timeseries(Year, RCMdata@Chist[, 2], report$Cpred[, 2], NULL, label = "Fleet 2")
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from fleet 3."}
+plot_timeseries(Year, RCMdata@Chist[, 3], report$Cpred[, 3], NULL, label = "Fleet 3")
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from fleet 4."}
+plot_timeseries(Year, RCMdata@Chist[, 4], report$Cpred[, 4], NULL, label = "Fleet 4")
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from fleet 5."}
+plot_timeseries(Year, RCMdata@Chist[, 5], report$Cpred[, 5], NULL, label = "Fleet 5")
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from fleet 6."}
+plot_timeseries(Year, RCMdata@Chist[, 6], report$Cpred[, 6], NULL, label = "Fleet 6")
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from fleet 7."}
+plot_timeseries(Year, RCMdata@Chist[, 7], report$Cpred[, 7], NULL, label = "Fleet 7")
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) catch from fleet 8."}
+plot_timeseries(Year, RCMdata@Chist[, 8], report$Cpred[, 8], NULL, label = "Fleet 8")
+```
+
+#### Index 
+
+```{r, fig.cap = "Observed (black) and predicted (red) index from survey 1."}
+plot_timeseries(Year, RCMdata@Index[, 1], report$Ipred[, 1], RCMdata@I_sd[, 1], label = "Index 1")
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) index from survey 2."}
+plot_timeseries(Year, RCMdata@Index[, 2], report$Ipred[, 2], RCMdata@I_sd[, 2], label = "Index 2")
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) index from survey 3."}
+plot_timeseries(Year, RCMdata@Index[, 3], report$Ipred[, 3], RCMdata@I_sd[, 3], label = "Index 3")
+```
+
+```{r, fig.cap = "Index residuals (in log space) for index from survey 1."}
+if (!all(is.na(RCMdata@Index[, 1]))) {
+  istart <- which(!is.na(RCMdata@Index[, 1]))[1]
+  istop <- which(!is.na(RCMdata@Index[, 1])) %>% max()
+  plot_residuals(Year[istart:istop], log(RCMdata@Index[, 1][istart:istop]/report$Ipred[, 1][istart:istop]), label = "Index 1 Residuals")
+}
+```
+
+```{r, fig.cap = "Index residuals (in log space) for index from survey 2."}
+if (!all(is.na(RCMdata@Index[, 2]))) {
+  istart <- which(!is.na(RCMdata@Index[, 2]))[1]
+  istop <- which(!is.na(RCMdata@Index[, 2])) %>% max()
+  plot_residuals(Year[istart:istop], log(RCMdata@Index[, 2][istart:istop]/report$Ipred[, 2][istart:istop]), label = "Index 2 Residuals")
+}
+```
+
+```{r, fig.cap = "Index residuals (in log space) for index from survey 3."}
+if (!all(is.na(RCMdata@Index[, 3]))) {
+  istart <- which(!is.na(RCMdata@Index[, 3]))[1]
+  istop <- which(!is.na(RCMdata@Index[, 3])) %>% max()
+  plot_residuals(Year[istart:istop], log(RCMdata@Index[, 3][istart:istop]/report$Ipred[, 3][istart:istop]), label = "Index 3 Residuals")
+}
+```
+
+#### Length comps 
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 1."}
+ind_valid <- rowSums(RCMdata@CAL[, , 1], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 1][ind_valid, , drop = FALSE], report$CALpred[, , 1][ind_valid, , drop = FALSE], plot_type = "annual", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 1][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (bubbles) for length composition from Fleet 1."}
+ind_valid <- rowSums(RCMdata@CAL[, , 1], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 1][ind_valid, , drop = FALSE], report$CALpred[, , 1][ind_valid, , drop = FALSE], plot_type = "bubble_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 1][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (colored tiles) for length composition from Fleet 1."}
+ind_valid <- rowSums(RCMdata@CAL[, , 1], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 1][ind_valid, , drop = FALSE], report$CALpred[, , 1][ind_valid, , drop = FALSE], plot_type = "heat_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 1][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean length from the composition data for Fleet 1."}
+ind_valid <- rowSums(RCMdata@CAL[, , 1], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 1][ind_valid, , drop = FALSE], report$CALpred[, , 1][ind_valid, , drop = FALSE], plot_type = "mean", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 1][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 2."}
+ind_valid <- rowSums(RCMdata@CAL[, , 2], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 2][ind_valid, , drop = FALSE], report$CALpred[, , 2][ind_valid, , drop = FALSE], plot_type = "annual", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 2][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (bubbles) for length composition from Fleet 2."}
+ind_valid <- rowSums(RCMdata@CAL[, , 2], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 2][ind_valid, , drop = FALSE], report$CALpred[, , 2][ind_valid, , drop = FALSE], plot_type = "bubble_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 2][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (colored tiles) for length composition from Fleet 2."}
+ind_valid <- rowSums(RCMdata@CAL[, , 2], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 2][ind_valid, , drop = FALSE], report$CALpred[, , 2][ind_valid, , drop = FALSE], plot_type = "heat_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 2][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean length from the composition data for Fleet 2."}
+ind_valid <- rowSums(RCMdata@CAL[, , 2], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 2][ind_valid, , drop = FALSE], report$CALpred[, , 2][ind_valid, , drop = FALSE], plot_type = "mean", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 2][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 3."}
+ind_valid <- rowSums(RCMdata@CAL[, , 3], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 3][ind_valid, , drop = FALSE], report$CALpred[, , 3][ind_valid, , drop = FALSE], plot_type = "annual", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 3][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (bubbles) for length composition from Fleet 3."}
+ind_valid <- rowSums(RCMdata@CAL[, , 3], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 3][ind_valid, , drop = FALSE], report$CALpred[, , 3][ind_valid, , drop = FALSE], plot_type = "bubble_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 3][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (colored tiles) for length composition from Fleet 3."}
+ind_valid <- rowSums(RCMdata@CAL[, , 3], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 3][ind_valid, , drop = FALSE], report$CALpred[, , 3][ind_valid, , drop = FALSE], plot_type = "heat_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 3][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean length from the composition data for Fleet 3."}
+ind_valid <- rowSums(RCMdata@CAL[, , 3], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 3][ind_valid, , drop = FALSE], report$CALpred[, , 3][ind_valid, , drop = FALSE], plot_type = "mean", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 3][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 4."}
+ind_valid <- rowSums(RCMdata@CAL[, , 4], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 4][ind_valid, , drop = FALSE], report$CALpred[, , 4][ind_valid, , drop = FALSE], plot_type = "annual", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 4][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (bubbles) for length composition from Fleet 4."}
+ind_valid <- rowSums(RCMdata@CAL[, , 4], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 4][ind_valid, , drop = FALSE], report$CALpred[, , 4][ind_valid, , drop = FALSE], plot_type = "bubble_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 4][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (colored tiles) for length composition from Fleet 4."}
+ind_valid <- rowSums(RCMdata@CAL[, , 4], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 4][ind_valid, , drop = FALSE], report$CALpred[, , 4][ind_valid, , drop = FALSE], plot_type = "heat_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 4][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean length from the composition data for Fleet 4."}
+ind_valid <- rowSums(RCMdata@CAL[, , 4], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 4][ind_valid, , drop = FALSE], report$CALpred[, , 4][ind_valid, , drop = FALSE], plot_type = "mean", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 4][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 5."}
+ind_valid <- rowSums(RCMdata@CAL[, , 5], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 5][ind_valid, , drop = FALSE], report$CALpred[, , 5][ind_valid, , drop = FALSE], plot_type = "annual", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 5][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (bubbles) for length composition from Fleet 5."}
+ind_valid <- rowSums(RCMdata@CAL[, , 5], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 5][ind_valid, , drop = FALSE], report$CALpred[, , 5][ind_valid, , drop = FALSE], plot_type = "bubble_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 5][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (colored tiles) for length composition from Fleet 5."}
+ind_valid <- rowSums(RCMdata@CAL[, , 5], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 5][ind_valid, , drop = FALSE], report$CALpred[, , 5][ind_valid, , drop = FALSE], plot_type = "heat_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 5][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean length from the composition data for Fleet 5."}
+ind_valid <- rowSums(RCMdata@CAL[, , 5], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 5][ind_valid, , drop = FALSE], report$CALpred[, , 5][ind_valid, , drop = FALSE], plot_type = "mean", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 5][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 6."}
+ind_valid <- rowSums(RCMdata@CAL[, , 6], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 6][ind_valid, , drop = FALSE], report$CALpred[, , 6][ind_valid, , drop = FALSE], plot_type = "annual", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 6][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (bubbles) for length composition from Fleet 6."}
+ind_valid <- rowSums(RCMdata@CAL[, , 6], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 6][ind_valid, , drop = FALSE], report$CALpred[, , 6][ind_valid, , drop = FALSE], plot_type = "bubble_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 6][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (colored tiles) for length composition from Fleet 6."}
+ind_valid <- rowSums(RCMdata@CAL[, , 6], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 6][ind_valid, , drop = FALSE], report$CALpred[, , 6][ind_valid, , drop = FALSE], plot_type = "heat_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 6][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean length from the composition data for Fleet 6."}
+ind_valid <- rowSums(RCMdata@CAL[, , 6], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 6][ind_valid, , drop = FALSE], report$CALpred[, , 6][ind_valid, , drop = FALSE], plot_type = "mean", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 6][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 7."}
+ind_valid <- rowSums(RCMdata@CAL[, , 7], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 7][ind_valid, , drop = FALSE], report$CALpred[, , 7][ind_valid, , drop = FALSE], plot_type = "annual", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 7][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (bubbles) for length composition from Fleet 7."}
+ind_valid <- rowSums(RCMdata@CAL[, , 7], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 7][ind_valid, , drop = FALSE], report$CALpred[, , 7][ind_valid, , drop = FALSE], plot_type = "bubble_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 7][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (colored tiles) for length composition from Fleet 7."}
+ind_valid <- rowSums(RCMdata@CAL[, , 7], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 7][ind_valid, , drop = FALSE], report$CALpred[, , 7][ind_valid, , drop = FALSE], plot_type = "heat_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 7][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean length from the composition data for Fleet 7."}
+ind_valid <- rowSums(RCMdata@CAL[, , 7], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 7][ind_valid, , drop = FALSE], report$CALpred[, , 7][ind_valid, , drop = FALSE], plot_type = "mean", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 7][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) length composition from Fleet 8."}
+ind_valid <- rowSums(RCMdata@CAL[, , 8], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 8][ind_valid, , drop = FALSE], report$CALpred[, , 8][ind_valid, , drop = FALSE], plot_type = "annual", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 8][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (bubbles) for length composition from Fleet 8."}
+ind_valid <- rowSums(RCMdata@CAL[, , 8], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 8][ind_valid, , drop = FALSE], report$CALpred[, , 8][ind_valid, , drop = FALSE], plot_type = "bubble_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 8][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Multinomial Pearson residuals (colored tiles) for length composition from Fleet 8."}
+ind_valid <- rowSums(RCMdata@CAL[, , 8], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 8][ind_valid, , drop = FALSE], report$CALpred[, , 8][ind_valid, , drop = FALSE], plot_type = "heat_residuals", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 8][ind_valid], bubble_adj = 1.5)
+```
+
+```{r, fig.cap = "Observed (black) and predicted (red) mean length from the composition data for Fleet 8."}
+ind_valid <- rowSums(RCMdata@CAL[, , 8], na.rm = TRUE) > 0
+if (any(ind_valid)) plot_composition(Year[ind_valid], RCMdata@CAL[, , 8][ind_valid, , drop = FALSE], report$CALpred[, , 8][ind_valid, , drop = FALSE], plot_type = "mean", CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, N = RCMdata@CAL_ESS[, 8][ind_valid], bubble_adj = 1.5)
+```
+
+### Output {.tabset}
+
+#### Fishery
+
+```{r, fig.cap = "Terminal year selectivity by fleet."}
+yy <- matrix(report$vul[nyears, , ], max_age + 1, nfleet)
+matplot(Age, matrix(report$vul[nyears, , ], max_age + 1, nfleet), type = "l", lty = 1, col = rich.colors(nfleet), ylim = c(0, 1.1 * max(yy, na.rm = TRUE)), xlab = "Age", ylab = "Selectivity", zero_line = TRUE)
+if (ncol(yy) > 1) legend("topleft", f_name, text.col = rich.colors(nfleet), bty = "n")
+```
+
+```{r, fig.cap = "Time series of fishing mortality by fleet."}
+yy <- report$F
+matplot(Year, report$F, type = "l", lty = 1, col = rich.colors(nfleet), ylim = c(0, 1.1 * max(yy, na.rm = TRUE)), xlab = "Year", ylab = "Fishing Mortality (F)", zero_line = TRUE)
+if (ncol(yy) > 1) legend("topleft", f_name, text.col = rich.colors(nfleet), bty = "n")
+```
+
+#### Survey
+
+```{r, fig.cap = "Index selectivity at age."}
+yy <- matrix(report$ivul[nyears, , ], max_age + 1, nsurvey)
+matplot(Age, matrix(report$ivul[nyears, , ], max_age + 1, nsurvey), type = "l", lty = 1, col = rich.colors(nsurvey), ylim = c(0, 1.1 * max(yy, na.rm = TRUE)), xlab = "Age", ylab = "Index selectivity", zero_line = TRUE)
+if (ncol(yy) > 1) legend("topleft", s_name, text.col = rich.colors(nsurvey), bty = "n")
+```
+
+#### Abundance
+
+```{r, fig.cap="Time series of spawning biomass."}
+plot_timeseries(as.numeric(names(structure(report$E, names = Yearplusone))),structure(report$E, names = Yearplusone), label = "Spawning biomass")
+
+
+```
+
+```{r, fig.cap="Time series of spawning depletion."}
+plot_timeseries(as.numeric(names(structure(report$E/report$E0_SR, names = Yearplusone))),structure(report$E/report$E0_SR, names = Yearplusone), label = expression(SSB/SSB[0]))
+
+
+```
+
+```{r, fig.cap="Time series of dynamic SSB0 (reconstructed population without fishing mortality)."}
+plot_timeseries(as.numeric(names(structure(report$dynamic_SSB0, names = Yearplusone))),structure(report$dynamic_SSB0, names = Yearplusone), label = expression("Dynamic"~SSB[0]))
+
+
+```
+
+```{r, fig.cap="Time series of recruitment."}
+plot_timeseries(as.numeric(names(structure(report$R, names = Yearplusone))),structure(report$R, names = Yearplusone), label = "Recruitment (R)")
+
+
+```
+
+```{r, fig.cap = "Stock-recruit relationship and estimated recruitment. The red point indicates unfished values."}
+if (!is.null(report$Rec_dev)) {
+  expectedR <- report$R/c(report$Rec_dev, 1)
+} else if (OM@SRrel %in% c(1, 2)) {
+  expectedR <- R_pred(report$E, report[["h"]], report[["R0"]], report$E0_SR, switch(OM@SRrel, "1" = "BH", "2" = "Ricker"))
+} else stop("Error in plotting recruitment")
+E_full <- seq(0, 1.1 * max(report$E, report$E0_SR), length.out = 100)
+if (OM@SRrel %in% c(1, 2)) {
+  expectedR_full <- R_pred(E_full, report[["h"]], report[["R0"]], report$E0_SR, switch(OM@SRrel, "1" = "BH", "2" = "Ricker"))
+} else {
+  expectedR_full <- R_pred(E_full, SR_type = "Mesnil-Rochet", Shinge = report$MRhinge, Rmax = report$MRRmax, gamma = report$MRgamma)
+}
+plot_SR(report$E, expectedR, report$R0, report$E0_SR, report$R)
+lines(E_full, expectedR_full, lty = 2)
+```
+
+
+```{r, fig.cap = "Stock-recruit relationship with trajectory."}
+plot_SR(report$E, expectedR, report$R0, report$E0_SR, report$R %>% structure(names = Yearplusone), trajectory = TRUE)
+lines(E_full, expectedR_full, lty = 2)
+```
+
+```{r, fig.cap = "Annual spawning potential ratio (SPR). Equilibrium SPR is calculated from the F-at-age in the corresponding year, while dynamic SPR is calculated from the cumulative survival of cohorts."}
+plot(Year, report$SPR_eq, typ = "o", lty = 3, ylim = c(0, 1), xlab = "Year", ylab = "Spawning potential ratio", zero_line = TRUE)
+lines(Year, report$SPR_dyn, typ = "o", pch = 16)
+legend("bottomleft", c("Equilibrium SPR", "Dynamic SPR"), lty = c(3, 1), pch = c(1, 16), bty = "n")
+```
+
+```{r, fig.cap="Time series of recruitment deviations."}
+plot_residuals(as.numeric(names(structure(report$log_rec_dev, names = Year))), structure(report$log_rec_dev, names = Year) , res_sd = NULL, label = "log-Recruitment deviations")
+```
+
+```{r, fig.cap="Time series of recruitment deviations with 95% confidence intervals."}
+if (conv) plot_residuals(as.numeric(names(structure(report$log_rec_dev, names = Year))), structure(report$log_rec_dev, names = Year) , res_sd = ifelse(data_mean_fit$est_rec_dev == 1, as.list(SD, "Std. Error")$log_rec_dev, 0), label = "log-Recruitment deviations")
+```
+
+```{r, fig.cap="Time series of abundance."}
+plot_timeseries(as.numeric(names(structure(rowSums(report$N), names = Yearplusone))),structure(rowSums(report$N), names = Yearplusone), label = "Abundance (N)")
+
+
+```
+
+```{r, fig.cap="Predicted abundance-at-age."}
+plot_composition(Yearplusone, report$N, CAL_bins = NULL, ages = Age, plot_type = "bubble_data", bubble_adj = 1.5)
+```
+
+```{r, fig.cap="Predicted catch-at-age (summed over all fleets)."}
+plot_composition(Year, apply(report$CAApred, 1:2, sum), CAL_bins = NULL, ages = Age, plot_type = "bubble_data", bubble_adj = 1.5)
+```
+
+```{r, fig.cap="Predicted catch-at-length (summed over all fleets)."}
+plot_composition(Year, apply(report$CALpred, 1:2, sum), CAL_bins = RCMdata@Misc$lbinmid, ages = NULL, plot_type = "bubble_data", bubble_adj = 1.5)
+```
+
+### Likelihood components
+
+#### Summary
+
+`r nll[[1]] 
+
+`
+
+
+#### Fleet likelihoods
+
+`r nll[[2]] 
+
+`
+
+
+#### Fleet likelihood weights
+
+`r nll[[3]] 
+
+`
+
+
+#### Survey likelihoods
+
+`r nll[[4]] 
+
+`
+
+
+#### Survey likelihood weights
+
+`r nll[[5]] 
+
+`
+
+
+### Correlation matrix
+
+`r SD$env$corr.fixed %>% structure(dimnames = list(make_unique_names(rownames(.)), make_unique_names(colnames(.)))) %>% as.data.frame()`
+
+
+## About
+
+This report was generated on: `r Sys.time()`<br />
+SAMtool R package version `r packageVersion("SAMtool")`<br />
+`r R.version.string`<br />
+

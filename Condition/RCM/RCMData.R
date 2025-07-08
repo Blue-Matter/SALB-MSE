@@ -36,7 +36,7 @@ library(ggplot2)
 RCMData <- new('RCMdata') 
 
 # ----- Catch Data -----
-CatchData <- readxl::read_excel('Data/SALB_2018.xlsx', "Catch")
+CatchData <- readxl::read_excel('Condition/Data/SALB_2018.xlsx', "Catch")
 
 # Filtering data up to 2018 for demo - this can be removed later
 CatchData <- CatchData |> dplyr::filter(Year<=2018)  
@@ -62,7 +62,7 @@ for (fl in Fleets) {
 }
 
 # ---- CPUE Data ----
-CPUEData <- readxl::read_excel('Data/SALB_2018.xlsx', "CPUE")
+CPUEData <- readxl::read_excel('Condition/Data/SALB_2018.xlsx', "CPUE")
 
 # Filtering data up to 2018 for demo - this can be removed later
 CPUEData <- CPUEData |> dplyr::filter(Year<=2018)
@@ -93,7 +93,7 @@ RCMData@I_sd <- RCMData@I_sd[, -no_CPUE]
 
 
 # ----- CAL Data ----
-CALData <- readxl::read_excel('Data/SALB_2018.xlsx', "CAL")
+CALData <- readxl::read_excel('Condition/Data/SALB_2018.xlsx', "CAL")
 
 # Filtering data up to 2018 for demo - this can be removed later
 CALData <- CALData |> dplyr::filter(Year<=2018)
@@ -123,6 +123,6 @@ RCMData@CAL_ESS <- pmin(apply(RCMData@CAL, c(1, 3), sum, na.rm = TRUE), CAL_ESS)
 RCMData@CAL_ESS[RCMData@CAL_ESS==0] <- NA
 RCMData@length_bin <- length_bin
 
-saveRDS(RCMData, 'Condition/RCM/SALB.rcmdata')
+saveRDS(RCMData, 'Condition/SALB.rcmdata')
 
 

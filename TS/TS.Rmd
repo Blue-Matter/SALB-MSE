@@ -1,0 +1,366 @@
+---
+title: Technical Specifications Document 
+subtitle: | 
+  Southern Atlantic Albacore MSE 
+author: 
+  - name: Adrian Hordyk
+    affiliation: Blue Matter Science Ltd
+  - name: "Rodrigo Sant'Ana"
+    affiliation: Universidade do Vale do Itajaí
+  - name: "Bruno Mourato"
+    affiliation: Universidade Federal de São Paulo
+date: "`r Sys.Date()`"
+output:
+  rmdformats::robobook:
+    highlight: kate
+    toc_depth: 2
+    use_bookdown: yes
+urlcolor: blue
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Introduction
+
+```{r message=FALSE, warning=FALSE}
+
+library(ggplot2)
+nsim <- 200
+```
+
+This document describes the technical details of the management strategy evaluation (MSE) framework being developed for the Southern Atlantic albacore (SALB) tuna fishery. This project is supported by the Marine Stewardship Council's [Ocean Stewardship Fund](https://www.msc.org/what-we-are-doing/our-collective-impact/ocean-stewardship-fund/impact-projects/south-atlantic-albacore-tuna-harvest-strategy-project-2025) with a multi-stakeholder collaboration between ICCAT members, fisheries and NGOs.
+
+This is a living document and will be continually updated as the project progresses.
+
+The overall objective of this project is to develop candidate management procedures (CMPs) for the SALB fishery, test their performance across the key uncertainties in the knowledge of the fishery dynamics, and adopt the harvest strategy that has is most likely to achieve the fishery's management objectives.
+
+The project is currently in its initial phase, with the following aims:
+
+1.  Develop an MSE framework for SALB;
+2.  Develop base case operating models (OM) with two different modelling frameworks: [Stock Synthesis 3](https://nmfs-ost.github.io/ss3-website/) (SS3) and the [Rapid Conditioning Model](https://openmse.com/tutorial-rcm/) (RCM), and compare their results;
+3.  Identify the primary uncertainties in the knowledge of the fishery system;
+4.  Develop an OM Grid spanning the uncertainties and condition OMs using SS3 (OM Grid Approach);
+5.  Develop a single stochastic OM conditioned with RCM that spans the uncertainties included in the SS3 Grid (Stochastic OM Approach);
+6.  Compare the results of the OM Grid Approach and Stochastic OM Approach and discuss the relative pros and cons of the two methodologies.
+
+The intention of this initial phase is to demonstrate the SALB MSE framework and compare the results of the two methods for conditioning the operating models.
+
+Currently the model uses SALB data up to 2018. It will be updated with the most recent fishery data one the demonstration MSE framework has been reviewed by representatives of the managers and stakeholders.
+
+Similarly, the life-history parameters and other technical specifications of the model (documented below) have not been reviewed by the SCRS or other interested stakeholders, and may be revised and updated once the initial framework has been reviewed.
+
+# Data
+
+The operating models have been conditioned using the same data used in the most recent stock assessments [@winker2020; @matsumoto2020].
+
+## Catch
+
+The SALB catches have been organized into 8 fleets (Table \@ref(tab:catch-table); Figure \@ref(fig:catch-plot)).
+
+```{r catch-table}
+
+CatchFleetDF <- data.frame(Fleet=1:8,
+                           Nations= c(
+                             'Chinese Taipei (LL), Korea (LL)',
+                             "China (LL), E. C. Spain (LL), E. C. Portugal (LL), Japan (LL), Philippines (LL), St Vincent and Grenadier (LL), USA (LL), Vanuatu (LL), Honduras (LL), Nei (LL), Côte D'Ivoire (LL), EU.United Kingdom (LL), Seychelles (LL), UK.Sta Helena (LL), Angola (LL), Senegal (LL), Trinidad and Tobago (LL)",
+                             "Same as 2",
+                             "Same as 2",
+                             "Brazil (LL, SU), Panama (LL), South Africa (LL, UN), Argentina (LL, TW, UN), Belize (LL), Cambodia (LL), Cuba (LL, UN), Namibia (LL)",
+                             "Brazil (BB, GN, HL, PS, TW, UN), E. C. Spain (PS), E. C. France (BB, PS), E. C. Portugal (BB, PS), Japan (BB, PS), Namibia (BB), Korea (BB) ,Maroc (PS), Panama (PS), South Africa (BB, HL, PS, RR, SP), USA (PS), USSR (SU, UN), UK St Helena (BB, RR), Chinese Taipei (GN), Nei (BB, PS), Argentina (PS), Belize (PS), Cape Verde (PS), Curaçao (PS), Guatemala (PS), Côte D'Ivoire (PS), Ghana (BB, PS), Guinea Ecuatorial (UN, HL), Guinée Rep. (PS), St. Vincent and Grenadines (PS), Guinea Ecuatorial (HL)",
+                             "Same as 6",
+                             "Uruguay (LL)"),
+                           `Time Period`= c(
+                             '1964 -- 2018',
+                             '1956 -- 1969',
+                             '1970 -- 1975',
+                             '1976 -- 2018',
+                             '1959 -- 2018',
+                             '1964 -- 1998',
+                             '1999 -- 2018',
+                             '1981 -- 2013')
+                           
+                           )
+
+knitr::kable(CatchFleetDF, caption = "The eight fleets used for the SALB catch data.", format = "html") |>
+  kableExtra::kable_styling(full_width = F)
+
+```
+
+```{r catch-plot, fig.cap='Time series plot of the SALB catch data by fleet.', fig.height=4.5, fig.width=8}
+
+library(ggplot2)
+
+RCMData <- readRDS('../Condition/SALB.rcmdata')
+
+
+Catch <- array2DF(RCMData@Chist, 'Catch') 
+Catch$Year <- as.numeric(Catch$Year)
+
+ggplot(Catch, aes(x=Year, y=Catch)) +
+  facet_wrap(~Fleet, scales='free_y') +
+  geom_line() +
+  theme_bw()
+
+```
+
+## Indices
+
+Three indices of abundance were used in the SALB assessment (Table \@ref(tab:index-table); Figure \@ref(fig:index-plot)).
+
+```{r index-table}
+
+IndexFleetDF <- data.frame(Fleet=c(1,4,8),
+                           Nations= c(
+                             'Chinese Taipei (LL)',
+                             'Japan (LL)',
+                             "Uruguay (LL)"),
+                           `Time Period`= c(
+                             '1967 -- 2018',
+                             '1976 -- 2018',
+                             '1983 -- 2011')
+                           
+                           )
+
+knitr::kable(IndexFleetDF, caption = "The three indices of abundance.",
+             format = "html") |>
+  kableExtra::kable_styling(full_width = F)
+```
+
+```{r index-plot, fig.cap='Time series plot of the SALB index data by fleet.', warning=FALSE, fig.height=2.5, fig.width=8}
+
+Indices <- array2DF(RCMData@Index, 'Index') 
+Indices$Year <- as.numeric(Indices$Year)
+
+Indices <- Indices |> 
+  dplyr::group_by(Fleet) |>
+  dplyr::mutate(Index=Index/mean(Index, na.rm=TRUE))
+  
+
+ggplot(Indices, aes(x=Year, y=Index)) +
+  facet_wrap(~Fleet, scales='free_y') +
+  geom_line() +
+  expand_limits(y=0)+
+  theme_bw()
+
+```
+
+## Composition Data
+
+Catch-at-length data was aggregated using the same fleet structure used for catch (Figure \@ref(fig:cal-plot))
+
+```{r cal-plot, fig.height=6, fig.width=8, message=FALSE, warning=FALSE, fig.cap='Length composition data for the 8 fleets. The catch-at-length data has been summed over all years and standardized by dividing by total number of samples (n) for each fleet.'}
+
+CAL <- array2DF(RCMData@CAL, 'CAL') 
+CAL$Year <- as.numeric(CAL$Year)
+CAL$Class <- as.numeric(CAL$Class)
+
+CAL <- CAL |>
+  dplyr::group_by(Fleet) |>
+  dplyr::filter(is.na(CAL)==FALSE, CAL>0.01) |>
+  dplyr::group_by(Fleet, Class) |>
+  dplyr::summarise(CAL=sum(CAL)) |>
+  dplyr::group_by(Fleet) |>
+  dplyr::mutate(n=sum(CAL), CAL=CAL/n) 
+  
+CALn <- CAL |> dplyr::group_by(Fleet) |>
+  dplyr::summarise(n=format(unique(n), big.mark=",", scientific=FALSE),
+                   Class=min(Class))
+
+ggplot(CAL) +
+  facet_wrap(~Fleet, scales='free_y') +
+  geom_line(linewidth=0.8, aes(x=Class, y=CAL)) +
+  expand_limits(y=0)+
+  geom_text(data=CALn, aes(x=-Inf, y=0.5* Inf, label=paste('n = ', n)), hjust=-0.1, vjust=1) +
+  theme_bw() +
+  labs(x='Length Class (cm)',
+       y='Relative Number')
+
+```
+
+# Life-History Parameters
+
+This section describes the life-history parameters used in the SALB operating models.
+
+## Natural Mortality
+
+The annual instantaneous natural mortality rate has been assumed by most ICCAT analysis to be 0.3 for all age classes for both the North and South Atlantic stocks [@iccat2016; @iccat2004].
+
+Given the uncertainty in this parameter, and it's importance on the stock dynamics, the OM assumed lower and upper bounds of $M=0.3$ and $M=0.4$.
+
+## Length-at-Age Schedule
+
+Mean length-at-age $L_a$ was modeled with the von Bertalanffy model:
+
+\begin{equation}
+L_a = L_\infty (1-e^{-K(a-t_0})
+(\#eq:VB)
+\end{equation}
+
+where $L_\infty$ is the mean asymptotic length, $K$ is the growth coefficient, and $t_0$ is the expected age when $L_a = 0$.
+
+The most recent estimates of the von Bertalanffy growth parameters for SALB were used in the OM [@lee2007]: $L_\infty = 147.5 \text{ cm}$, $K = 0.126 \text{ y}^{-1}$, and $t_0 = 1.89 \text{ year}$.
+
+## Length-Weight
+
+The length-weight relationship is modeled with an allometric function:
+
+\begin{equation}
+W= aL^b
+(\#eq:LW)
+\end{equation}
+
+The values reported by @penney1994 were used in the OM: $a=1.3718E^-5$ and $b=3.09773$.
+
+## Maturity
+
+@travassos2024 recently conductive a study of the reproductive biology of SALB. Their reported values were used in the OM: $L_{50}= 89.7$ for females and $L_{50}=88$ for males, and length at 95% maturity as $L_{95} = 94$ for both sexes.
+
+## Stock-Recruit Relationship
+
+The stock-recruit relationship was modeled with the Beverton-Holt equation, parameterized in terms of steepness $(h)$:
+
+\begin{equation}
+R_{t+a_r}= \frac{4R_0hS_t}{(1-h)R_0\phi_0+(5h-1)S}
+(\#eq:BHSRR)
+\end{equation}
+
+where $a_r$ is the age of recruitment, $R_0$ is the equilibrium unexploited recruitment, $S_t$ is the spawning production at time *t*, and $\phi_0$ is the unexploited spawning biomass per recruit $(S_0/R_0)$.
+
+Steepness has not been estimated for Atlantic Albacore. The North Atlantic Albacore MSE assumed steepness ranging from 0.7 to 0.9 [@merino2020].
+
+Following this, $h=0.7$ and $h=0.9$ were considered the lower and upper bounds for this parameter.
+
+The standard deviation of the log-normally distributed recruitment deviations was set to $\sigma_R = 0.4$.
+
+# Uncertainties
+
+## Current Uncertainties
+
+The Base Case OM currently has two axes of uncertainty in the life-history parameters (see [Life-History Parameters])
+
+1.  Natural mortality (*M*): 0.3 – 0.4
+2.  Steepness of the Beverton-Holt stock-recruit relationship (*h*): 0.7 – 0.9
+
+## Potential Additional Uncertainties
+
+Additional uncertainties that could be considered for the life-history parameters are:
+
+-   Uncertainty in the von Bertalanffy growth parameters
+
+-   Variation in the maturity parameters (e.g., bounded by the confidence intervals reported by @travassos2024)
+
+<!-- -->
+
+-   Variation in the recruitment deviations $(\sigma_R)$
+
+Additionally, correlations between the stochastic values of the life-history parameters could be considered in the operating model.
+
+# OM Conditioning
+
+The Operating Models were conditioned using two different modelling frameworks: [Stock Synthesis 3](https://nmfs-ost.github.io/ss3-website/) (SS3) and the [Rapid Conditioning Model](https://openmse.com/tutorial-rcm/) (RCM).
+
+The operating models had `r nsim` simulations and a 30-year projection period.
+
+## Stock Synthesis 3
+
+TBD
+
+## Rapid Conditioning Model (RCM)
+
+The RCM was used to condition two different OMs: *RCM* *Base Mean* and *RCM* *Base Stochastic.*
+
+The model was run assuming logistic selectivity pattern for the long-line fleets (LL) and dome-shaped for the purse-seine (PS) and bait boats (BB; Table \@ref(tab:selectivity-table)).
+
+A minimum CV of 0.2 was assumed for all indices. The effective sample size for the length composition data was set to 50.
+
+```{r selectivity-table}
+
+df <- CatchFleetDF
+df <- df |> 
+  dplyr::select(-Time.Period) |>
+  dplyr::mutate(Selectivity=c('Logistic',
+                               'Logistic',
+                               'Logistic',
+                               'Logistic',
+                               'Logistic',
+                               'Dome',
+                               'Dome',
+                               'Logistic'))
+
+knitr::kable(df, caption = "The assumed selectivity patterns for the 8 fleets used in the RCM OM Conditioning.", format = "html") |>
+  kableExtra::kable_styling(full_width = F)
+
+```
+
+### RCM Base Mean
+
+The *RCM* *Base Mean* OM was conditioned using the mean value of the stochastic life-history parameters (see Section \@ref(life-history-parameters)); i.e., all life-history parameters were identical across the individual simulations.
+
+In this OM, the historical fishery dynamics are identical across the simulations, with stochastic recruitment deviations and observation error in the projection period.
+
+This OM is used to compare the predictions of RCM with the output of SS3 with the same structure and assumed parameter values.
+
+### RCM Base Stochastic 
+
+The *RCM* *Base Stochastic* OM was generated by running the RCM `r nsim` times (each simulation) and randomly sampling the stochastic life-history parameters (see Section \@ref(life-history-parameters)) from the ranges and distributions specified in the OM. Currently the model assumes a uniform distribution for *M* and *h*.
+
+In this OM, there are `r nsim` predictions of the historical fishery dynamics; i.e., a single OM that includes the stochastic variability in the life-history parameters.
+
+# Historical Fishery Dynamics
+
+> This section will be updated with a comparision of the output of both the SS3 and RCM OMs.
+
+Figure \@ref(fig:rcm-hist) shows the time series plots of the estimated SB/SBMSY for the RCM Base Mean and RCM Base Stochastic OMs.
+
+```{r rcm-hist, fig.cap='Time series plots of the estimated SB/SBMSY for the RCM Base Mean and RCM Base Stochastic OMs.', fig.height=4.5, fig.width=8}
+
+OM_Mean <- readRDS('../OM/RCM_Mean.om')
+Hist_Mean <- readRDS('../Hist/RCM_Mean.hist')
+Hist_Stochastic <- readRDS('../Hist/RCM_Stochastic.hist')
+
+
+HistYears <- seq(OM_Mean@CurrentYr, by=-1, length.out=OM_Mean@nyears) |> rev()
+
+SB_SBMSY_Mean <- apply(Hist_Mean@TSdata$SBiomass, 1:2, sum)/matrix(Hist_Mean@Ref$ReferencePoints$SSBMSY, OM_Mean@nsim, OM_Mean@nyears, byrow=FALSE)
+dimnames(SB_SBMSY_Mean) <- list(Sim=1:OM_Mean@nsim,
+                                Year=HistYears)
+SB_SBMSY_Stochastic <- apply(Hist_Stochastic@TSdata$SBiomass, 1:2, sum)/matrix(Hist_Stochastic@Ref$ReferencePoints$SSBMSY, OM_Mean@nsim, OM_Mean@nyears, byrow=FALSE)
+
+dimnames(SB_SBMSY_Stochastic) <- list(Sim=1:OM_Mean@nsim,
+                                Year=HistYears)
+
+
+SB_SBMSY_Mean <- array2DF(SB_SBMSY_Mean)
+SB_SBMSY_Mean$Year <- as.numeric(SB_SBMSY_Mean$Year)
+SB_SBMSY_Mean$Value <- as.numeric(SB_SBMSY_Mean$Value)
+SB_SBMSY_Mean$Model <- 'Mean'
+
+SB_SBMSY_Stochastic <- array2DF(SB_SBMSY_Stochastic)
+SB_SBMSY_Stochastic$Year <- as.numeric(SB_SBMSY_Stochastic$Year)
+SB_SBMSY_Stochastic$Value <- as.numeric(SB_SBMSY_Stochastic$Value)
+SB_SBMSY_Stochastic$Model <- 'Stochastic'
+
+df <- dplyr::bind_rows(SB_SBMSY_Mean, SB_SBMSY_Stochastic)
+
+
+ggplot(df, aes(x=Year, y=Value, group=Sim)) +
+  facet_wrap(~Model) +
+  geom_line() +
+  expand_limits(y=0) +
+  labs(y='SB/SBMSY') +
+  geom_hline(yintercept =1, linetype=2) +
+  theme_bw()
+```
+
+## Comparision of Base Mean OMs
+
+> Compare Base Mean SS3 and RCM output
+
+## Comparison of Base Stochastic OMs
+
+> Compare Base Stochastic SS3 and RCM output
+
+# References
