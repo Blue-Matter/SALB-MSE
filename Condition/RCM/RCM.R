@@ -2,13 +2,12 @@ library(openMSE)
 
 # RCM Conditioning ----
 
-source('Condition/LifeHistoryParameters.R')
+source('Condition/Specifications.R')
 
 source('Condition/RCM/RCMData.R')
 
 RCMData <- readRDS('Condition/RCM/SALB.rcmdata')
 
-nsim <- 200
 ## Base Case OM (no stochastic parameter) ----
 
 OM_Base <- tinyErr(new('OM'))
@@ -16,7 +15,7 @@ OM_Base@Name <- "Base Case - Non Stochastic"
 OM_Base@nyears <- nrow(RCMData@Chist)
 OM_Base@nsim <- nsim
 OM_Base@Species <- "Thunnus alalunga"
-OM_Base@proyears <- 30
+OM_Base@proyears <- proyears
 OM_Base@maxage <- 20
 OM_Base@CurrentYr <- 2018
 
@@ -53,16 +52,18 @@ OM_Base@R0 <- 1e5 # initial value, need high R0
 OM_Base_Stochastic <- OM_Base
 OM_Base_Stochastic@Name <- "Base Case - Stochastic"
 
+StochasticValues <- read.csv('Condition/LHSamples.csv')
+
 ### ---- Natural Mortality ----
 
-OM_Base_Stochastic@M <- M_range
-
+OM_Base_Stochastic@M <- range(StochasticValues$M)
+OM_Base_Stochastic@cpars$M <- StochasticValues$M
 
 ### ---- Stock Recruit ----
 
-OM_Base_Stochastic@h <- h_range
+OM_Base_Stochastic@h <- range(StochasticValues$h)
 
-OM_Base_Stochastic@cpars$hs <- runif(nsim, h_range[1], h_range[2])
+OM_Base_Stochastic@cpars$hs <- StochasticValues$h
 
 # ---- Condition Base Case OM - Non Stochastic ----
 
@@ -82,14 +83,24 @@ OM_Base_Stochastic@Vmaxlen <- OM_Base@Vmaxlen
 # Purse Seine - dome 
 # Bait Boat - dome 
 
-selectivity <- c("logistic_length", # LL
-                 "logistic_length", # LL
-                 "logistic_length", # LL 
-                 "logistic_length", # LL
-                 "logistic_length", # LL
+# selectivity <- c("logistic_length", # LL
+#                  "logistic_length", # LL
+#                  "logistic_length", # LL 
+#                  "logistic_length", # LL
+#                  "logistic_length", # LL
+#                  "dome_length", # PS & BB
+#                  "dome_length", # PS & BB
+#                  "logistic_length")  # LL
+
+# Assuming all dome-shaped:
+selectivity <- c("dome_length", # LL
+                 "dome_length", # LL
+                 "dome_length", # LL 
+                 "dome_length", # LL
+                 "dome_length", # LL
                  "dome_length", # PS & BB
                  "dome_length", # PS & BB
-                 "logistic_length")  # LL
+                 "dome_length")  # LL
 
 Base_Mean <- RCM(OM_Base, RCMData, 
                    condition = "catch2",      

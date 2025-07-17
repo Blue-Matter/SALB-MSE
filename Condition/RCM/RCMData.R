@@ -25,7 +25,7 @@ library(ggplot2)
 # 1. Chinese Taipei (LL)
 # 2. -
 # 3. -
-# 4. Japan (LL) 1976 - 2018
+# 4. Japan (LL) 1976 - 2011 # only use up to 2011
 # 5. -
 # 6. -
 # 7. -
@@ -81,6 +81,11 @@ for (fl in CPUEFleets) {
                                       dimnames = list(Year=cpuedata$Year, Fleet=unique(cpuedata$Fleet))
   )
 }
+
+# remove 2012 - 2018 for JPN LL Index
+JPNLLYears <- !Years %in% 1976:2011
+RCMData@Index[JPNLLYears,4] <- NA
+RCMData@I_sd[JPNLLYears,4] <- NA
 
 MinIndCV <- 0.2
 

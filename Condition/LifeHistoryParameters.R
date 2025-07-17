@@ -16,8 +16,7 @@
 M_range <- c(0.3, 0.4)
 
 M_mu <- mean(M_range)
-
-
+M_sd <- 0.1
 
 # ---- Length-at-Age ----
 
@@ -40,7 +39,18 @@ L95_mu <- 94
 h_range <- c(0.7, 0.9)
 
 h_mu <- mean(h_range)
-
+h_sd <- 0.1
 
 PE_mu <- 0.4
 
+
+# 
+# h2CR <- function(h) {
+#   (4*h)/(1-h)
+# }
+# 
+# CR2h <- function(CR) {
+#   CR/(CR+4)
+# }
+# 
+# CR_sd <- 4
