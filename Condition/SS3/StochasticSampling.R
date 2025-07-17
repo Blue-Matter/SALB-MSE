@@ -11,7 +11,7 @@ SS3Dir <- file.path(Root, 'SS3')
 
 # Put the Base Case SS3 output in `SSDirBase`
 SSDirBase <- file.path(SS3Dir, 'Base') # path to base case SS3 output (mean value)
-DataFileName <- 'SWOv5.dat' # name of the data file - REPLACE
+DataFileName <- 'SALB.dat' # name of the data file - REPLACE
 CrtFileName <- 'control.ss_new' # name of the control file - REPLACE
 
 StochasticValues <- read.csv('Condition/LHSamples.csv') # generated in GenerateDistributions.R
