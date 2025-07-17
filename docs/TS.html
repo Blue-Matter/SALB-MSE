@@ -1661,19 +1661,8 @@ margin-left: 0 !important;
           <li><a href="#indices" id="toc-indices"><span class="toc-section-number">2.2</span> Indices</a></li>
           <li><a href="#composition-data" id="toc-composition-data"><span class="toc-section-number">2.3</span> Composition Data</a></li>
           </ul></li>
-          <li><a href="#life-history-parameters" id="toc-life-history-parameters"><span class="toc-section-number">3</span> Life-History Parameters</a>
-          <ul>
-          <li><a href="#natural-mortality" id="toc-natural-mortality"><span class="toc-section-number">3.1</span> Natural Mortality</a></li>
-          <li><a href="#length-at-age-schedule" id="toc-length-at-age-schedule"><span class="toc-section-number">3.2</span> Length-at-Age Schedule</a></li>
-          <li><a href="#length-weight" id="toc-length-weight"><span class="toc-section-number">3.3</span> Length-Weight</a></li>
-          <li><a href="#maturity" id="toc-maturity"><span class="toc-section-number">3.4</span> Maturity</a></li>
-          <li><a href="#stock-recruit-relationship" id="toc-stock-recruit-relationship"><span class="toc-section-number">3.5</span> Stock-Recruit Relationship</a></li>
-          </ul></li>
-          <li><a href="#uncertainties" id="toc-uncertainties"><span class="toc-section-number">4</span> Uncertainties</a>
-          <ul>
-          <li><a href="#current-uncertainties" id="toc-current-uncertainties"><span class="toc-section-number">4.1</span> Current Uncertainties</a></li>
-          <li><a href="#potential-additional-uncertainties" id="toc-potential-additional-uncertainties"><span class="toc-section-number">4.2</span> Potential Additional Uncertainties</a></li>
-          </ul></li>
+          <li><a href="#base-life-history-parameters" id="toc-base-life-history-parameters"><span class="toc-section-number">3</span> Base Life-History Parameters</a></li>
+          <li><a href="#uncertainties-in-life-history-parameters" id="toc-uncertainties-in-life-history-parameters"><span class="toc-section-number">4</span> Uncertainties in Life-History Parameters</a></li>
           <li><a href="#om-conditioning" id="toc-om-conditioning"><span class="toc-section-number">5</span> OM Conditioning</a>
           <ul>
           <li><a href="#stock-synthesis-3" id="toc-stock-synthesis-3"><span class="toc-section-number">5.1</span> Stock Synthesis 3</a></li>
@@ -1933,72 +1922,360 @@ Figure 2.3: Length composition data for the 8 fleets. The catch-at-length data h
 </div>
 </div>
 </div>
-<div id="life-history-parameters" class="section level1" number="3">
-<h1><span class="header-section-number">3</span> Life-History Parameters</h1>
-<p>This section describes the life-history parameters used in the SALB operating models.</p>
-<div id="natural-mortality" class="section level2" number="3.1">
-<h2><span class="header-section-number">3.1</span> Natural Mortality</h2>
-<p>The annual instantaneous natural mortality rate has been assumed by most ICCAT analysis to be 0.3 for all age classes for both the North and South Atlantic stocks <span class="citation">(ICCAT 2016, 2004)</span>.</p>
-<p>Given the uncertainty in this parameter, and it’s importance on the stock dynamics, the OM assumed lower and upper bounds of <span class="math inline">\(M=0.3\)</span> and <span class="math inline">\(M=0.4\)</span>.</p>
+<div id="base-life-history-parameters" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Base Life-History Parameters</h1>
+<p>Table <a href="#tab:LH-base-case">3.1</a> shows the life history parameters for the Base Case operating model.</p>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+<span id="tab:LH-base-case">Table 3.1: </span>Life history parameters for the Base Case Operating Model
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Parameter
+</th>
+<th style="text-align:left;">
+Description
+</th>
+<th style="text-align:left;">
+Value
+</th>
+<th style="text-align:left;">
+Reference
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+<span class="math inline">\(M\)</span>
+</td>
+<td style="text-align:left;">
+Natural mortality rate
+</td>
+<td style="text-align:left;">
+0.35
+</td>
+<td style="text-align:left;">
+<span class="citation">ICCAT (2016)</span>; <span class="citation">ICCAT (2004)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<span class="math inline">\(L_\infty\)</span>
+</td>
+<td style="text-align:left;">
+von Bertalanffy asymptotic length
+</td>
+<td style="text-align:left;">
+147.5
+</td>
+<td style="text-align:left;">
+<span class="citation">Lee and Yeh (2007)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<span class="math inline">\(K\)</span>
+</td>
+<td style="text-align:left;">
+growth coefficient
+</td>
+<td style="text-align:left;">
+0.126
+</td>
+<td style="text-align:left;">
+<span class="citation">Lee and Yeh (2007)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<span class="math inline">\(t_0\)</span>
+</td>
+<td style="text-align:left;">
+expected age at L=0
+</td>
+<td style="text-align:left;">
+-1.89
+</td>
+<td style="text-align:left;">
+<span class="citation">Lee and Yeh (2007)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<span class="math inline">\(a\)</span>
+</td>
+<td style="text-align:left;">
+length-weight relationship; average weight at L=1
+</td>
+<td style="text-align:left;">
+1.37e-05
+</td>
+<td style="text-align:left;">
+<span class="citation">Penney (1994)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<span class="math inline">\(b\)</span>
+</td>
+<td style="text-align:left;">
+length-weight relationship exponent
+</td>
+<td style="text-align:left;">
+3.09773
+</td>
+<td style="text-align:left;">
+<span class="citation">Penney (1994)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<span class="math inline">\(L_{50}\)</span>
+</td>
+<td style="text-align:left;">
+Length corresponding with 50% probability of maturity
+</td>
+<td style="text-align:left;">
+89.7
+</td>
+<td style="text-align:left;">
+<span class="citation">Travassos et al. (2024)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<span class="math inline">\(L_{95}\)</span>
+</td>
+<td style="text-align:left;">
+Length corresponding with 95% probability of maturity
+</td>
+<td style="text-align:left;">
+94
+</td>
+<td style="text-align:left;">
+<span class="citation">Travassos et al. (2024)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<span class="math inline">\(h\)</span>
+</td>
+<td style="text-align:left;">
+Steepness of Beverton-Holt SRR
+</td>
+<td style="text-align:left;">
+0.8
+</td>
+<td style="text-align:left;">
+Assumed based on <span class="citation">Merino et al. (2020)</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<span class="math inline">\(\sigma_R\)</span>
+</td>
+<td style="text-align:left;">
+Standard deviation of the log-normally distributed recruitment deviations
+</td>
+<td style="text-align:left;">
+0.4
+</td>
+<td style="text-align:left;">
+Assumed
+</td>
+</tr>
+</tbody>
+</table>
 </div>
-<div id="length-at-age-schedule" class="section level2" number="3.2">
-<h2><span class="header-section-number">3.2</span> Length-at-Age Schedule</h2>
-<p>Mean length-at-age <span class="math inline">\(L_a\)</span> was modeled with the von Bertalanffy model:</p>
-<p><span class="math display" id="eq:VB">\[\begin{equation}
-L_a = L_\infty (1-e^{-K(a-t_0})
-\tag{3.1}
-\end{equation}\]</span></p>
-<p>where <span class="math inline">\(L_\infty\)</span> is the mean asymptotic length, <span class="math inline">\(K\)</span> is the growth coefficient, and <span class="math inline">\(t_0\)</span> is the expected age when <span class="math inline">\(L_a = 0\)</span>.</p>
-<p>The most recent estimates of the von Bertalanffy growth parameters for SALB were used in the OM <span class="citation">(Lee and Yeh 2007)</span>: <span class="math inline">\(L_\infty = 147.5 \text{ cm}\)</span>, <span class="math inline">\(K = 0.126 \text{ y}^{-1}\)</span>, and <span class="math inline">\(t_0 = 1.89 \text{ year}\)</span>.</p>
-</div>
-<div id="length-weight" class="section level2" number="3.3">
-<h2><span class="header-section-number">3.3</span> Length-Weight</h2>
-<p>The length-weight relationship is modeled with an allometric function:</p>
-<p><span class="math display" id="eq:LW">\[\begin{equation}
-W= aL^b
-\tag{3.2}
-\end{equation}\]</span></p>
-<p>The values reported by <span class="citation">Penney (1994)</span> were used in the OM: <span class="math inline">\(a=1.3718E^-5\)</span> and <span class="math inline">\(b=3.09773\)</span>.</p>
-</div>
-<div id="maturity" class="section level2" number="3.4">
-<h2><span class="header-section-number">3.4</span> Maturity</h2>
-<p><span class="citation">Travassos et al. (2024)</span> recently conductive a study of the reproductive biology of SALB. Their reported values were used in the OM: <span class="math inline">\(L_{50}= 89.7\)</span> for females and <span class="math inline">\(L_{50}=88\)</span> for males, and length at 95% maturity as <span class="math inline">\(L_{95} = 94\)</span> for both sexes.</p>
-</div>
-<div id="stock-recruit-relationship" class="section level2" number="3.5">
-<h2><span class="header-section-number">3.5</span> Stock-Recruit Relationship</h2>
-<p>The stock-recruit relationship was modeled with the Beverton-Holt equation, parameterized in terms of steepness <span class="math inline">\((h)\)</span>:</p>
-<p><span class="math display" id="eq:BHSRR">\[\begin{equation}
-R_{t+a_r}= \frac{4R_0hS_t}{(1-h)R_0\phi_0+(5h-1)S}
-\tag{3.3}
-\end{equation}\]</span></p>
-<p>where <span class="math inline">\(a_r\)</span> is the age of recruitment, <span class="math inline">\(R_0\)</span> is the equilibrium unexploited recruitment, <span class="math inline">\(S_t\)</span> is the spawning production at time <em>t</em>, and <span class="math inline">\(\phi_0\)</span> is the unexploited spawning biomass per recruit <span class="math inline">\((S_0/R_0)\)</span>.</p>
-<p>Steepness has not been estimated for Atlantic Albacore. The North Atlantic Albacore MSE assumed steepness ranging from 0.7 to 0.9 <span class="citation">(Merino et al. 2020)</span>.</p>
-<p>Following this, <span class="math inline">\(h=0.7\)</span> and <span class="math inline">\(h=0.9\)</span> were considered the lower and upper bounds for this parameter.</p>
-<p>The standard deviation of the log-normally distributed recruitment deviations was set to <span class="math inline">\(\sigma_R = 0.4\)</span>.</p>
-</div>
-</div>
-<div id="uncertainties" class="section level1" number="4">
-<h1><span class="header-section-number">4</span> Uncertainties</h1>
-<div id="current-uncertainties" class="section level2" number="4.1">
-<h2><span class="header-section-number">4.1</span> Current Uncertainties</h2>
-<p>The Base Case OM currently has two axes of uncertainty in the life-history parameters (see <a href="#life-history-parameters">Life-History Parameters</a>)</p>
+<div id="uncertainties-in-life-history-parameters" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Uncertainties in Life-History Parameters</h1>
+<p>The SALB MSE currently considers two axes of uncertainty in the life-history parameters (see <a href="#base-life-history-parameters">Base Life-History Parameters</a>):</p>
 <ol style="list-style-type: decimal">
-<li>Natural mortality (<em>M</em>): 0.3 – 0.4</li>
-<li>Steepness of the Beverton-Holt stock-recruit relationship (<em>h</em>): 0.7 – 0.9</li>
+<li>Natural mortality (<em>M</em>)</li>
+<li>Steepness of the Beverton-Holt stock-recruit relationship (<em>h</em>)</li>
 </ol>
-</div>
-<div id="potential-additional-uncertainties" class="section level2" number="4.2">
-<h2><span class="header-section-number">4.2</span> Potential Additional Uncertainties</h2>
-<p>Additional uncertainties that could be considered for the life-history parameters are:</p>
-<ul>
-<li><p>Uncertainty in the von Bertalanffy growth parameters</p></li>
-<li><p>Variation in the maturity parameters (e.g., bounded by the confidence intervals reported by <span class="citation">Travassos et al. (2024)</span>)</p></li>
-</ul>
-<!-- -->
-<ul>
+<p>Potential additional uncertainties could include:</p>
+<ol style="list-style-type: decimal">
+<li>Additional uncertainties that could be considered for the life-history parameters are:</li>
+<li>Uncertainty in the von Bertalanffy growth parameters</li>
+<li>Variation in the maturity parameters (e.g., bounded by the confidence intervals reported by <span class="citation">Travassos et al. (2024)</span>)</li>
 <li>Variation in the recruitment deviations <span class="math inline">\((\sigma_R)\)</span></li>
-</ul>
-<p>Additionally, correlations between the stochastic values of the life-history parameters could be considered in the operating model.</p>
+</ol>
+<p>The uncertainty in the continuous life-history parameters was deal with in two ways.</p>
+<p>First, a discrete OM Uncertainty Grid was developed assuming three levels for each parameter. This approach follows the methodology used in other ICCAT MSE processes, and results in 9 individual operating models, each with discrete values from the factorial combinations of the axes and levels of uncertainty (Table <a href="#tab:LH-grid">4.1</a>).</p>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+<span id="tab:LH-grid">Table 4.1: </span>The values used in the discrete uncertainty grid.
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+OM
+</th>
+<th style="text-align:right;">
+M
+</th>
+<th style="text-align:right;">
+h
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.30
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.35
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0.30
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+0.35
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+<td style="text-align:right;">
+0.8
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+0.30
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+0.35
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+0.40
+</td>
+<td style="text-align:right;">
+0.9
+</td>
+</tr>
+</tbody>
+</table>
+<p>The second approach involved sampling 200values of the life-history parameters from a multivariate distribution, and running the OM Conditioning model (see next section) for each sample. A single OM was then generated, incorporating the output of the 200 fits to the data with the stochastic life-history parameters.</p>
+<p>The methodology for sampling the life-history parameters was based on the methodology developed by <span class="citation">Taylor (2024)</span> for the Southern Atlantic Swordfish.</p>
+<p>The life-history parameters were assumed to be log-normally distributed (Table <a href="#tab:LH-stochastic">4.2</a>), and were sampled from a multivariate distribution truncated at 1.96 standard deviations. The truncation was used to exclude extreme values from the tails of the distribution.</p>
+<p>The covariance matrix for the multivariate distribution was generated by using the correlation between <em>M</em> and <em>h</em> reported by the FishLife package <span class="citation">(Thorson et al. 2023)</span> for <em>Thunnus alalunga.</em></p>
+<p>Figure <a href="#fig:stochastic-plot">4.1</a> shows a scatterplot and marginal histograms of the 200 samples of the stochastic life-history parameters.</p>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+<span id="tab:LH-stochastic">Table 4.2: </span>The mean and standard deviation used to generate the stochastic life-history parameters.
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Parameter
+</th>
+<th style="text-align:right;">
+Mean
+</th>
+<th style="text-align:right;">
+SD
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+<span class="math inline">\(M\)</span>
+</td>
+<td style="text-align:right;">
+0.35
+</td>
+<td style="text-align:right;">
+0.1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<span class="math inline">\(h\)</span>
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.1
+</td>
+</tr>
+</tbody>
+</table>
+<div class="figure"><span style="display:block;" id="fig:stochastic-plot"></span>
+<img role="img" aria-label="Scatterplot with marginal histograms of the samples of the stochastic life-history parameters." src="data:image/png;base64,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" alt="Scatterplot with marginal histograms of the samples of the stochastic life-history parameters." width="432" />
+<p class="caption">
+Figure 4.1: Scatterplot with marginal histograms of the samples of the stochastic life-history parameters.
+</p>
 </div>
 </div>
 <div id="om-conditioning" class="section level1" number="5">
@@ -2073,13 +2350,13 @@ for the long-line fleets (LL) and dome-shaped for the purse-seine (PS) and bait 
 -->
 <div id="rcm-base-mean" class="section level3" number="5.2.1">
 <h3><span class="header-section-number">5.2.1</span> RCM Base Mean</h3>
-<p>The <em>RCM</em> <em>Base Mean</em> OM was conditioned using the mean value of the stochastic life-history parameters (see Section <a href="#life-history-parameters">3</a>); i.e., all life-history parameters were identical across the individual simulations.</p>
+<p>The <em>RCM</em> <em>Base Mean</em> OM was conditioned using the mean value of the stochastic life-history parameters (see Section <a href="#life-history-parameters"><strong>??</strong></a>); i.e., all life-history parameters were identical across the individual simulations.</p>
 <p>In this OM, the historical fishery dynamics are identical across the simulations, with stochastic recruitment deviations and observation error in the projection period.</p>
 <p>This OM is used to compare the predictions of RCM with the output of SS3 with the same structure and assumed parameter values.</p>
 </div>
 <div id="rcm-base-stochastic" class="section level3" number="5.2.2">
 <h3><span class="header-section-number">5.2.2</span> RCM Base Stochastic</h3>
-<p>The <em>RCM</em> <em>Base Stochastic</em> OM was generated by running the RCM 200 times (each simulation) and randomly sampling the stochastic life-history parameters (see Section <a href="#life-history-parameters">3</a>) from the ranges and distributions specified in the OM. Currently the model assumes a uniform distribution for <em>M</em> and <em>h</em>.</p>
+<p>The <em>RCM</em> <em>Base Stochastic</em> OM was generated by running the RCM 200 times (each simulation) and randomly sampling the stochastic life-history parameters (see Section <a href="#uncertainties-in-life-history-parameters">4</a>).</p>
 <p>In this OM, there are 200 predictions of the historical fishery dynamics; i.e., a single OM that includes the stochastic variability in the life-history parameters.</p>
 </div>
 </div>
@@ -2087,7 +2364,7 @@ for the long-line fleets (LL) and dome-shaped for the purse-seine (PS) and bait 
 <div id="historical-fishery-dynamics" class="section level1" number="6">
 <h1><span class="header-section-number">6</span> Historical Fishery Dynamics</h1>
 <blockquote>
-<p>This section will be updated with a comparision of the output of both the SS3 and RCM OMs.</p>
+<p>This section will be updated with a comparison of the output of both the SS3 and RCM OMs.</p>
 </blockquote>
 <p>Figure <a href="#fig:rcm-hist">6.1</a> shows the time series plots of the estimated SB/SBMSY for the RCM Base Mean and RCM Base Stochastic OMs.</p>
 <div class="figure"><span style="display:block;" id="fig:rcm-hist"></span>
@@ -2129,6 +2406,12 @@ Merino, G, L T Kell, H Arrizabalaga, and J Santiago. 2020. <span>“Consolidated
 </div>
 <div id="ref-penney1994" class="csl-entry">
 Penney, Andrew J. 1994. <span>“Morphometric Relationships, Annual Catches and Catch-at-Size for South African Caught South Atlantic Albacore (Thunnus Alalunga).”</span> <em>Collect. Vol. Sci. Pap. ICCAT</em> 42 (1): 371–82.
+</div>
+<div id="ref-taylor2024" class="csl-entry">
+Taylor, Nathan G. 2024. <span>“An Overview of the Southern Swordfish Closed-Loop Simulation Approach.”</span> <em>Collect. Vol. Sci. Pap. ICCAT</em>, no. in prep.
+</div>
+<div id="ref-thorson2023" class="csl-entry">
+Thorson, James T., Aurore A. Maureaud, Romain Frelat, Bastien Mérigot, Jennifer S. Bigman, Sarah T. Friedman, Maria Lourdes D. Palomares, Malin L. Pinsky, Samantha A. Price, and Peter Wainwright. 2023. <span>“Identifying Direct and Indirect Associations Among Traits by Merging Phylogenetic Comparative Methods and Structural Equation Models.”</span> <em>Methods in Ecology and Evolution</em> 14 (5): 1259–75. <a href="https://doi.org/10.1111/2041-210X.14076">https://doi.org/10.1111/2041-210X.14076</a>.
 </div>
 <div id="ref-travassos2024" class="csl-entry">
 Travassos, P, P Souza, S Kerwath, A Domingo, R Forselledo, N-J Su, F Santana, and C Jagger. 2024. <span>“Thunnus Alalunga (Bonaterre 1788) Reproductive Biology Study in South Atlantic.”</span> <em>Collect. Vol. Sci. Pap. ICCAT</em> 81 (3): 1–16.

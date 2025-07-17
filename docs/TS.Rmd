@@ -21,6 +21,7 @@ bibliography: references.bib
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+source('../Condition/LifeHistoryParameters.R')
 ```
 
 # Introduction
@@ -28,6 +29,7 @@ knitr::opts_chunk$set(echo = FALSE)
 ```{r message=FALSE, warning=FALSE}
 
 library(ggplot2)
+library(ggExtra)
 nsim <- 200
 ```
 
@@ -180,83 +182,134 @@ ggplot(CAL) +
 
 ```
 
-# Life-History Parameters
+# Base Life-History Parameters
 
-This section describes the life-history parameters used in the SALB operating models.
+Table \@ref(tab:LH-base-case) shows the life history parameters for the Base Case operating model.
 
-## Natural Mortality
+```{r LH-base-case}
 
-The annual instantaneous natural mortality rate has been assumed by most ICCAT analysis to be 0.3 for all age classes for both the North and South Atlantic stocks [@iccat2016; @iccat2004].
+LHBaseCase <- data.frame(Parameter=c(
+  '$M$', 
+  '$L_\\infty$',
+  '$K$',
+  '$t_0$',
+  '$a$',
+  '$b$',
+  '$L_{50}$',
+  '$L_{95}$',
+  '$h$',
+  '$\\sigma_R$'
+  ),
+  Description=c(
+    'Natural mortality rate',
+    'von Bertalanffy asymptotic length',
+    'growth coefficient',
+    'expected age at L=0',
+    'length-weight relationship; average weight at L=1',
+    'length-weight relationship exponent',
+    'Length corresponding with 50% probability of maturity',
+    'Length corresponding with 95% probability of maturity',
+    'Steepness of Beverton-Holt SRR',
+    'Standard deviation of the log-normally distributed recruitment deviations'
+  ),
+  Value=c(M_mu,
+          Linf_mu,
+          K_mu,
+          t0_mu,
+          as.character(signif(Wa_mu,3)),
+          Wb_mu,
+          L50_mu,
+          L95_mu,
+          h_mu,
+          PE_mu),
+  Reference=c('@iccat2016; @iccat2004',
+              '@lee2007',
+              '@lee2007',
+              '@lee2007',
+              '@penney1994',
+              '@penney1994',
+              '@travassos2024',
+              '@travassos2024',
+              'Assumed based on @merino2020',
+              'Assumed'
+              )
+)
 
-Given the uncertainty in this parameter, and it's importance on the stock dynamics, the OM assumed lower and upper bounds of $M=0.3$ and $M=0.4$.
+knitr::kable(LHBaseCase, caption = "Life history parameters for the Base Case Operating Model",
+             format = "html",
+             digits=2) |>
+  kableExtra::kable_styling(full_width = T)
 
-## Length-at-Age Schedule
+```
 
-Mean length-at-age $L_a$ was modeled with the von Bertalanffy model:
+# Uncertainties in Life-History Parameters
 
-\begin{equation}
-L_a = L_\infty (1-e^{-K(a-t_0})
-(\#eq:VB)
-\end{equation}
+The SALB MSE currently considers two axes of uncertainty in the life-history parameters (see [Base Life-History Parameters]):
 
-where $L_\infty$ is the mean asymptotic length, $K$ is the growth coefficient, and $t_0$ is the expected age when $L_a = 0$.
+1.  Natural mortality (*M*)
+2.  Steepness of the Beverton-Holt stock-recruit relationship (*h*)
 
-The most recent estimates of the von Bertalanffy growth parameters for SALB were used in the OM [@lee2007]: $L_\infty = 147.5 \text{ cm}$, $K = 0.126 \text{ y}^{-1}$, and $t_0 = 1.89 \text{ year}$.
+Potential additional uncertainties could include:
 
-## Length-Weight
+1.  Additional uncertainties that could be considered for the life-history parameters are:
+2.  Uncertainty in the von Bertalanffy growth parameters
+3.  Variation in the maturity parameters (e.g., bounded by the confidence intervals reported by @travassos2024)
+4.  Variation in the recruitment deviations $(\sigma_R)$
 
-The length-weight relationship is modeled with an allometric function:
+The uncertainty in the continuous life-history parameters was deal with in two ways.
 
-\begin{equation}
-W= aL^b
-(\#eq:LW)
-\end{equation}
+First, a discrete OM Uncertainty Grid was developed assuming three levels for each parameter. This approach follows the methodology used in other ICCAT MSE processes, and results in 9 individual operating models, each with discrete values from the factorial combinations of the axes and levels of uncertainty (Table \@ref(tab:LH-grid)).
 
-The values reported by @penney1994 were used in the OM: $a=1.3718E^-5$ and $b=3.09773$.
+```{r LH-grid}
 
-## Maturity
+Grid <- data.frame(OM=1:9,
+                   M=rep(c(0.3, 0.35, 0.4),3),
+                   h=rep(c(0.7, 0.8, 0.9), each=3)
+)
+  
+knitr::kable(Grid, caption = "The values used in the discrete uncertainty grid.",
+             format = "html",
+             digits=2) |>
+  kableExtra::kable_styling(full_width = T)
 
-@travassos2024 recently conductive a study of the reproductive biology of SALB. Their reported values were used in the OM: $L_{50}= 89.7$ for females and $L_{50}=88$ for males, and length at 95% maturity as $L_{95} = 94$ for both sexes.
+```
 
-## Stock-Recruit Relationship
+The second approach involved sampling `r nsim`values of the life-history parameters from a multivariate distribution, and running the OM Conditioning model (see next section) for each sample. A single OM was then generated, incorporating the output of the `r nsim` fits to the data with the stochastic life-history parameters.
 
-The stock-recruit relationship was modeled with the Beverton-Holt equation, parameterized in terms of steepness $(h)$:
+The methodology for sampling the life-history parameters was based on the methodology developed by @taylor2024 for the Southern Atlantic Swordfish.
 
-\begin{equation}
-R_{t+a_r}= \frac{4R_0hS_t}{(1-h)R_0\phi_0+(5h-1)S}
-(\#eq:BHSRR)
-\end{equation}
+The life-history parameters were assumed to be log-normally distributed (Table \@ref(tab:LH-stochastic)), and were sampled from a multivariate distribution truncated at 1.96 standard deviations. The truncation was used to exclude extreme values from the tails of the distribution.
 
-where $a_r$ is the age of recruitment, $R_0$ is the equilibrium unexploited recruitment, $S_t$ is the spawning production at time *t*, and $\phi_0$ is the unexploited spawning biomass per recruit $(S_0/R_0)$.
+The covariance matrix for the multivariate distribution was generated by using the correlation between *M* and *h* reported by the FishLife package [@thorson2023] for *Thunnus alalunga.*
 
-Steepness has not been estimated for Atlantic Albacore. The North Atlantic Albacore MSE assumed steepness ranging from 0.7 to 0.9 [@merino2020].
+Figure \@ref(fig:stochastic-plot) shows a scatterplot and marginal histograms of the `r nsim` samples of the stochastic life-history parameters.
 
-Following this, $h=0.7$ and $h=0.9$ were considered the lower and upper bounds for this parameter.
+```{r LH-stochastic}
 
-The standard deviation of the log-normally distributed recruitment deviations was set to $\sigma_R = 0.4$.
+LHStochastic <- data.frame(Parameter=c(
+  '$M$', 
+  '$h$'
+  ),
+  Mean=c(M_mu,h_mu),
+  SD=c(M_sd, h_sd)
+)
 
-# Uncertainties
+knitr::kable(LHStochastic, caption = "The mean and standard deviation used to generate the stochastic life-history parameters.",
+             format = "html",
+             digits=2) |>
+  kableExtra::kable_styling(full_width = T)
+```
 
-## Current Uncertainties
+```{r stochastic-plot, fig.cap='Scatterplot with marginal histograms of the samples of the stochastic life-history parameters.', fig.height=4.5, fig.width=4.5}
 
-The Base Case OM currently has two axes of uncertainty in the life-history parameters (see [Life-History Parameters])
+Stochastic <- read.csv('../Condition/LHSamples.csv') 
+  
+p <- ggplot(Stochastic, aes(x=M, y=h)) +
+  geom_point() +
+  theme_bw()
 
-1.  Natural mortality (*M*): 0.3 – 0.4
-2.  Steepness of the Beverton-Holt stock-recruit relationship (*h*): 0.7 – 0.9
-
-## Potential Additional Uncertainties
-
-Additional uncertainties that could be considered for the life-history parameters are:
-
--   Uncertainty in the von Bertalanffy growth parameters
-
--   Variation in the maturity parameters (e.g., bounded by the confidence intervals reported by @travassos2024)
-
-<!-- -->
-
--   Variation in the recruitment deviations $(\sigma_R)$
-
-Additionally, correlations between the stochastic values of the life-history parameters could be considered in the operating model.
+ggExtra::ggMarginal(p, type='histogram')
+```
 
 # OM Conditioning
 
@@ -274,12 +327,15 @@ The RCM was used to condition two different OMs: *RCM* *Base Mean* and *RCM* *Ba
 
 The model was run assuming a dome-shaped selectivity pattern all fleets.
 
+```{=html}
 <!--#
 for the long-line fleets (LL) and dome-shaped for the purse-seine (PS) and bait boats (BB; Table \@ref(tab:selectivity-table)).  
 -->
+```
 
 A minimum CV of 0.2 was assumed for all indices. The effective sample size for the length composition data was set to 50.
 
+````{=html}
 <!--#
 ```{r selectivity-table}
 
@@ -300,6 +356,7 @@ knitr::kable(df, caption = "The assumed selectivity patterns for the 8 fleets us
 
 ```
 -->
+````
 
 ### RCM Base Mean
 
@@ -311,13 +368,13 @@ This OM is used to compare the predictions of RCM with the output of SS3 with th
 
 ### RCM Base Stochastic
 
-The *RCM* *Base Stochastic* OM was generated by running the RCM `r nsim` times (each simulation) and randomly sampling the stochastic life-history parameters (see Section \@ref(life-history-parameters)) from the ranges and distributions specified in the OM. Currently the model assumes a uniform distribution for *M* and *h*.
+The *RCM* *Base Stochastic* OM was generated by running the RCM `r nsim` times (each simulation) and randomly sampling the stochastic life-history parameters (see Section \@ref(uncertainties-in-life-history-parameters)).
 
 In this OM, there are `r nsim` predictions of the historical fishery dynamics; i.e., a single OM that includes the stochastic variability in the life-history parameters.
 
 # Historical Fishery Dynamics
 
-> This section will be updated with a comparision of the output of both the SS3 and RCM OMs.
+> This section will be updated with a comparison of the output of both the SS3 and RCM OMs.
 
 Figure \@ref(fig:rcm-hist) shows the time series plots of the estimated SB/SBMSY for the RCM Base Mean and RCM Base Stochastic OMs.
 
