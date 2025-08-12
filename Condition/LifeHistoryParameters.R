@@ -41,7 +41,7 @@ h_range <- c(0.7, 0.9)
 h_mu <- mean(h_range)
 h_sd <- 0.1
 
-PE_mu <- 0.4
+PE_mu <- 0.3
 
 
 # 

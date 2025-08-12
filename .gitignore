@@ -4,4 +4,6 @@
 .Ruserdata
 *.hist
 *.rcm
-/Condition/SS3/ALB-S_Stochastic
+*.mse
+/Condition/SS3/
+

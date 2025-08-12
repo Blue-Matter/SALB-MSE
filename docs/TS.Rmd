@@ -60,33 +60,27 @@ The operating models have been conditioned using the same data used in the most 
 
 ## Catch
 
-The SALB catches have been organized into 8 fleets (Table \@ref(tab:catch-table); Figure \@ref(fig:catch-plot)).
+The SALB catches have been organized into 5 fleets (Table \@ref(tab:catch-table); Figure \@ref(fig:catch-plot)).
 
 ```{r catch-table}
 
-CatchFleetDF <- data.frame(Fleet=1:8,
+CatchFleetDF <- data.frame(Fleet=1:5,
                            Nations= c(
                              'Chinese Taipei (LL), Korea (LL)',
                              "China (LL), E. C. Spain (LL), E. C. Portugal (LL), Japan (LL), Philippines (LL), St Vincent and Grenadier (LL), USA (LL), Vanuatu (LL), Honduras (LL), Nei (LL), Côte D'Ivoire (LL), EU.United Kingdom (LL), Seychelles (LL), UK.Sta Helena (LL), Angola (LL), Senegal (LL), Trinidad and Tobago (LL)",
-                             "Same as 2",
-                             "Same as 2",
                              "Brazil (LL, SU), Panama (LL), South Africa (LL, UN), Argentina (LL, TW, UN), Belize (LL), Cambodia (LL), Cuba (LL, UN), Namibia (LL)",
                              "Brazil (BB, GN, HL, PS, TW, UN), E. C. Spain (PS), E. C. France (BB, PS), E. C. Portugal (BB, PS), Japan (BB, PS), Namibia (BB), Korea (BB) ,Maroc (PS), Panama (PS), South Africa (BB, HL, PS, RR, SP), USA (PS), USSR (SU, UN), UK St Helena (BB, RR), Chinese Taipei (GN), Nei (BB, PS), Argentina (PS), Belize (PS), Cape Verde (PS), Curaçao (PS), Guatemala (PS), Côte D'Ivoire (PS), Ghana (BB, PS), Guinea Ecuatorial (UN, HL), Guinée Rep. (PS), St. Vincent and Grenadines (PS), Guinea Ecuatorial (HL)",
-                             "Same as 6",
                              "Uruguay (LL)"),
                            `Time Period`= c(
                              '1964 -- 2018',
-                             '1956 -- 1969',
-                             '1970 -- 1975',
-                             '1976 -- 2018',
+                             '1956 -- 2018',
                              '1959 -- 2018',
-                             '1964 -- 1998',
-                             '1999 -- 2018',
+                             '1964 -- 2018',
                              '1981 -- 2013')
                            
                            )
 
-knitr::kable(CatchFleetDF, caption = "The eight fleets used for the SALB catch data.", format = "html") |>
+knitr::kable(CatchFleetDF, caption = "The five fleets used for the SALB catch data.", format = "html") |>
   kableExtra::kable_styling(full_width = F)
 
 ```
@@ -95,7 +89,7 @@ knitr::kable(CatchFleetDF, caption = "The eight fleets used for the SALB catch d
 
 library(ggplot2)
 
-RCMData <- readRDS('../Condition/SALB.rcmdata')
+RCMData <- readRDS('../Condition/RCM/SALB.rcmdata')
 
 
 Catch <- array2DF(RCMData@Chist, 'Catch') 
@@ -114,7 +108,7 @@ Three indices of abundance were used in the SALB assessment (Table \@ref(tab:ind
 
 ```{r index-table}
 
-IndexFleetDF <- data.frame(Fleet=c(1,4,8),
+IndexFleetDF <- data.frame(Fleet=c(1,2,3),
                            Nations= c(
                              'Chinese Taipei (LL)',
                              'Japan (LL)',
@@ -256,9 +250,10 @@ Potential additional uncertainties could include:
 3.  Variation in the maturity parameters (e.g., bounded by the confidence intervals reported by @travassos2024)
 4.  Variation in the recruitment deviations $(\sigma_R)$
 
-The uncertainty in the continuous life-history parameters was deal with in two ways.
+The uncertainty in the continuous life-history parameters was deal with in two ways: a discrete uncertainty grid and stochastic sampling of the life-history parameters from a continuous distribution.
 
-First, a discrete OM Uncertainty Grid was developed assuming three levels for each parameter. This approach follows the methodology used in other ICCAT MSE processes, and results in 9 individual operating models, each with discrete values from the factorial combinations of the axes and levels of uncertainty (Table \@ref(tab:LH-grid)).
+## Discrete Uncertainty Grid
+A discrete OM Uncertainty Grid was developed assuming three levels for each parameter. This approach follows the methodology used in other ICCAT MSE processes, and results in 9 individual operating models, each with discrete values from the factorial combinations of the axes and levels of uncertainty (Table \@ref(tab:LH-grid)).
 
 ```{r LH-grid}
 
@@ -274,7 +269,8 @@ knitr::kable(Grid, caption = "The values used in the discrete uncertainty grid."
 
 ```
 
-The second approach involved sampling `r nsim`values of the life-history parameters from a multivariate distribution, and running the OM Conditioning model (see next section) for each sample. A single OM was then generated, incorporating the output of the `r nsim` fits to the data with the stochastic life-history parameters.
+## Stochastic Sampling
+The second approach involved sampling `r nsim` values of the life-history parameters from a multivariate distribution, and running the OM Conditioning model (see next section) for each simulation. A single OM was then generated, incorporating the output of the `r nsim` fits to the data with the stochastic life-history parameters.
 
 The methodology for sampling the life-history parameters was based on the methodology developed by @taylor2024 for the Southern Atlantic Swordfish.
 
@@ -335,32 +331,29 @@ for the long-line fleets (LL) and dome-shaped for the purse-seine (PS) and bait 
 
 A minimum CV of 0.2 was assumed for all indices. The effective sample size for the length composition data was set to 50.
 
-````{=html}
-<!--#
 ```{r selectivity-table}
 
-df <- CatchFleetDF
-df <- df |> 
-  dplyr::select(-Time.Period) |>
-  dplyr::mutate(Selectivity=c('Logistic',
-                               'Logistic',
-                               'Logistic',
-                               'Logistic',
-                               'Logistic',
-                               'Dome',
-                               'Dome',
-                               'Logistic'))
-
-knitr::kable(df, caption = "The assumed selectivity patterns for the 8 fleets used in the RCM OM Conditioning.", format = "html") |>
-  kableExtra::kable_styling(full_width = F)
+# df <- CatchFleetDF
+# df <- df |> 
+#   dplyr::select(-Time.Period) |>
+#   dplyr::mutate(Selectivity=c('Logistic',
+#                                'Logistic',
+#                                'Logistic',
+#                                'Logistic',
+#                                'Logistic',
+#                                'Dome',
+#                                'Dome',
+#                                'Logistic'))
+# 
+# knitr::kable(df, caption = "The assumed selectivity patterns for the 8 fleets used in the RCM OM Conditioning.", format = "html") |>
+#   kableExtra::kable_styling(full_width = F)
 
 ```
--->
-````
+
 
 ### RCM Base Mean
 
-The *RCM* *Base Mean* OM was conditioned using the mean value of the stochastic life-history parameters (see Section \@ref(life-history-parameters)); i.e., all life-history parameters were identical across the individual simulations.
+The *RCM* *Base Mean* OM was conditioned using the mean value of the stochastic life-history parameters (see Section \@ref(uncertainties-in-life-history-parameters)); i.e., all life-history parameters were identical across the individual simulations.
 
 In this OM, the historical fishery dynamics are identical across the simulations, with stochastic recruitment deviations and observation error in the projection period.
 

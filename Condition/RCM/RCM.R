@@ -8,6 +8,7 @@ source('Condition/RCM/RCMData.R')
 
 RCMData <- readRDS('Condition/RCM/SALB.rcmdata')
 
+
 ## Base Case OM (no stochastic parameter) ----
 
 OM_Base <- tinyErr(new('OM'))
@@ -93,19 +94,16 @@ OM_Base_Stochastic@Vmaxlen <- OM_Base@Vmaxlen
 #                  "logistic_length")  # LL
 
 # Assuming all dome-shaped:
-selectivity <- c("dome_length", # LL
-                 "dome_length", # LL
-                 "dome_length", # LL 
-                 "dome_length", # LL
-                 "dome_length", # LL
-                 "dome_length", # PS & BB
-                 "dome_length", # PS & BB
-                 "dome_length")  # LL
+selectivity <- c("dome_length", 
+                 "dome_length", 
+                 "dome_length", 
+                 "dome_length",
+                 "dome_length")  
 
 Base_Mean <- RCM(OM_Base, RCMData, 
                    condition = "catch2",      
                    selectivity = selectivity,
-                   s_selectivity = c(1, 4, 8),
+                 s_selectivity = c(1, 2, 5),
                    max_F=10,
                    mean_fit = TRUE)
 
@@ -121,7 +119,7 @@ Base_Stochastic <- RCM(OM_Base_Stochastic, RCMData,
                    condition = "catch2",  
                    cores=24,
                    selectivity = selectivity,
-                   s_selectivity = c(1, 4, 8), 
+                   s_selectivity = c(1, 2, 5), 
                    max_F=10,
                    mean_fit = TRUE)
 

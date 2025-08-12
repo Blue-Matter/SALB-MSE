@@ -12,24 +12,16 @@ library(ggplot2)
 # Fleets:
 # Catch: 
 # 1. Chinese Taipei & Korea (LL)
-# 2. China, E.C Spain, E.C Portugal, Japan, Philippines, St Vincent & Grenadier, USA, Vanuatu, Honduras, Nei, Cote D'Ivoire, E.U UK, Seychelles, U.K Sta Helena, Angola, Senegal, Trinidad & Tobago (1956 - 1969)
-# 3. As 2 (1970 - 1975)
-# 4. As 2 (1976 - 2018)
-# 5. Brazil, Panama, South Africa, Argentina, Belize, Cambodia, Cuba, Namibia
-# 6. 1956 - 1998 Brazil etc
-# 7. 1999 - 2018 Brazil etc
-# 8. Uruguay
+# 2. China, E.C Spain, E.C Portugal, Japan, Philippines, St Vincent & Grenadier, USA, Vanuatu, Honduras, Nei, Cote D'Ivoire, E.U UK, Seychelles, U.K Sta Helena, Angola, Senegal, Trinidad & Tobago 
+# 3. Brazil, Panama, South Africa, Argentina, Belize, Cambodia, Cuba, Namibia
+# 4. Brazil etc
+# 5. Uruguay
 #
 # CPUE: (1956 - 2018) 
 # Three CPUE series used in 2020 assessment
 # 1. Chinese Taipei (LL)
-# 2. -
-# 3. -
-# 4. Japan (LL) 1976 - 2011 # only use up to 2011
-# 5. -
-# 6. -
-# 7. -
-# 8. Uruguay (LL)
+# 2. Japan (LL) 1976 - 2011 # only use up to 2011
+# 3. Uruguay (LL)
 
 # readxl::excel_sheets('Data/SALB_2018.xlsx')
 
@@ -37,6 +29,14 @@ RCMData <- new('RCMdata')
 
 # ----- Catch Data -----
 CatchData <- readxl::read_excel('Condition/Data/SALB_2018.xlsx', "Catch")
+
+CatchData$Fleet |> unique()
+
+CatchData$Fleet[CatchData$Fleet %in% 2:4] <- 2 # combine time stanzas
+CatchData$Fleet[CatchData$Fleet %in% 5] <- 3 # combine time stanzas
+CatchData$Fleet[CatchData$Fleet %in% 6:7] <- 4 # combine time stanzas
+CatchData$Fleet[CatchData$Fleet %in% 8] <- 5 # combine time stanzas
+
 
 # Filtering data up to 2018 for demo - this can be removed later
 CatchData <- CatchData |> dplyr::filter(Year<=2018)  
@@ -67,9 +67,15 @@ CPUEData <- readxl::read_excel('Condition/Data/SALB_2018.xlsx', "CPUE")
 # Filtering data up to 2018 for demo - this can be removed later
 CPUEData <- CPUEData |> dplyr::filter(Year<=2018)
 
-CPUEFleets <- CPUEData$Fleet |> unique()
+CPUEData$Fleet[CPUEData$Fleet %in% 2:4] <- 2 # combine time stanzas
+CPUEData$Fleet[CPUEData$Fleet %in% 5] <- 3 # combine time stanzas
+CPUEData$Fleet[CPUEData$Fleet %in% 6:7] <- 4 # combine time stanzas
+CPUEData$Fleet[CPUEData$Fleet %in% 8] <- 5 # combine time stanzas
 
-RCMData@Index <- array(NA, c(nYears, nFleet), dimnames = list(Year=Years, Fleet=Fleets))
+CPUEFleets <- CPUEData$Fleet |> unique()
+nCPUEFleet <- length(CPUEFleets)
+
+RCMData@Index <- array(NA, c(nYears, nCPUEFleet), dimnames = list(Year=Years, Fleet=CPUEFleets))
 RCMData@I_sd <- RCMData@Index
 for (fl in CPUEFleets) {
   cpuedata <- CPUEData |> dplyr::filter(Fleet==fl) 
@@ -84,17 +90,17 @@ for (fl in CPUEFleets) {
 
 # remove 2012 - 2018 for JPN LL Index
 JPNLLYears <- !Years %in% 1976:2011
-RCMData@Index[JPNLLYears,4] <- NA
-RCMData@I_sd[JPNLLYears,4] <- NA
+RCMData@Index[JPNLLYears,2] <- NA
+RCMData@I_sd[JPNLLYears,2] <- NA
 
 MinIndCV <- 0.2
 
 RCMData@I_sd <- pmax(RCMData@I_sd, MinIndCV) 
 
-# Remove fleets that do not have CPUE
-no_CPUE <- setdiff(1:nFleet, CPUEData$Fleet)
-RCMData@Index <- RCMData@Index[, -no_CPUE]
-RCMData@I_sd <- RCMData@I_sd[, -no_CPUE]
+# # Remove fleets that do not have CPUE
+# no_CPUE <- setdiff(1:nCPUEFleet, CPUEData$Fleet)
+# RCMData@Index <- RCMData@Index[, -no_CPUE]
+# RCMData@I_sd <- RCMData@I_sd[, -no_CPUE]
 
 
 # ----- CAL Data ----
@@ -105,14 +111,21 @@ CALData <- CALData |> dplyr::filter(Year<=2018)
 
 CALFleets <- CALData$Fleet |> unique()
 
+CALData$Fleet[CALData$Fleet %in% 2:4] <- 2 # combine time stanzas
+CALData$Fleet[CALData$Fleet %in% 5] <- 3 # combine time stanzas
+CALData$Fleet[CALData$Fleet %in% 6:7] <- 4 # combine time stanzas
+CALData$Fleet[CALData$Fleet %in% 8] <- 5 # combine time stanzas
+
+CALFleets <- CALData$Fleet |> unique() 
+nCALFleets <- CALFleets |> length()
 
 length_bin <- as.numeric(colnames(CALData))
 length_bin <- length_bin[!is.na(length_bin)]
 nBin <- length(length_bin)
 
-RCMData@CAL <- array(NA, c(nYears, nBin, nFleet), dimnames = list(Year=Years,
+RCMData@CAL <- array(NA, c(nYears, nBin, nCALFleets), dimnames = list(Year=Years,
                                                                   Class=length_bin,
-                                                                  Fleet=Fleets))
+                                                                  Fleet=CALFleets))
 CAL_ESS <- 50 
 for (fl in CALFleets) {
   caldataFleet <- CALData |> dplyr::filter(Fleet==fl) 
@@ -128,6 +141,6 @@ RCMData@CAL_ESS <- pmin(apply(RCMData@CAL, c(1, 3), sum, na.rm = TRUE), CAL_ESS)
 RCMData@CAL_ESS[RCMData@CAL_ESS==0] <- NA
 RCMData@length_bin <- length_bin
 
-saveRDS(RCMData, 'Condition/SALB.rcmdata')
+saveRDS(RCMData, 'Condition/RCM/SALB.rcmdata')
 
 
