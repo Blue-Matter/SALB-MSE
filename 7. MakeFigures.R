@@ -1,8 +1,96 @@
 library(MSEtool)
 library(Slick)
+library(ggplot2)
+library(flextable)
+
+
+MSE <- readRDS('MSE/Stochastic.mse')
+MSEFiles <- list.files('MSE', full.names = TRUE)
+GridMSEFiles <- MSEFiles[-c(grep("Stochastic.mse", MSEFiles),grep("Base.mse", MSEFiles))]
+MSEList <- purrr::map(GridMSEFiles, readRDS)
+
+
+SB_SBMSY(MSE) |> dplyr::group_by(MP, TimeStep) |>
+  dplyr::filter(Period=='Projection') |>
+  dplyr::summarise(Mean=mean(Value)) |>
+  tidyr::pivot_wider(names_from = MP, values_from = Mean) |>
+  print(n=90)
+
+
+Landings(MSE) |> dplyr::group_by(MP, TimeStep) |>
+  dplyr::filter(Period=='Projection') |>
+  dplyr::summarise(Mean=median(Value)) |>
+  tidyr::pivot_wider(names_from = MP, values_from = Mean) |>
+  print(n=90)
+
+# ---- Historical OM ----
+
+SB_SBMSY(MSE)
+
+apicalF(MSE) |> dplyr::filter(Period=='Projection') |>
+  dplyr::group_by(MP) |>
+  dplyr::summarise(max(Value))
+
+Landings(MSE) |> dplyr::filter(MP=="CC1") |>
+  dplyr::group_by(MP, TimeStep) |>
+  dplyr::summarise(median(Value))
 
 Slick <- readRDS('Slick/Stochastic.slick')
 SlickGrid <- readRDS('Slick/Grid.slick')
+
+plotQuilt(Slick)
+
+
+plotKobe(Slick, Time=TRUE, ncol=2)
+
+
+linewidth.median.line <- 1.1
+alpha1 <- 0.9
+
+
+# TODO - fix the quants stuff ..
+# figure out correct way to plot mean vs median
+
+
+plotTimeseries(Slick, 4, targ_name = '', lim_name = '',
+               includeHist = F, byMP=T,
+               linewidth.median.line = linewidth.median.line, alpha1 =alpha1,
+               quants1=c(0.1,.9), quants2=c(0,0),
+               ncol=2)
+ggsave("Figures/SB_SBMSY_Stochastic.png",
+       width=11, height=5.5)
+
+# plotTimeseries(Slick, 5, targ_name = '', lim_name = '',
+#                includeHist = F, byMP=T,
+#                linewidth.median.line = linewidth.median.line, alpha1 =alpha1,
+#                ncol=2)
+# ggsave("Figures/F_FMSY_Stochastic.png",
+#        width=11, height=5.5)
+
+
+plotTimeseries(Slick, 3, targ_name = '', lim_name = '',
+               includeHist = T, byMP=T,
+               linewidth.median.line = linewidth.median.line, alpha1 =alpha1,
+               ncol=2)
+ggsave("Figures/Landings_Stochastic.png",
+       width=11, height=5.5)
+
+t = plotQuilt(Slick, kable=TRUE)
+flextable::save_as_image(t, 'Figures/Quilt_Stochastic.png')
+
+# Grid 
+t = plotQuilt(SlickGrid, kable=TRUE)
+flextable::save_as_image(t, 'Figures/Quilt_Grid.png')
+
+
+plotTimeseries(SlickGrid, 4, targ_name = '', lim_name = '',
+               includeHist = T, byMP=F, byOM=T, includeQuants = FALSE,
+               includeLabels =FALSE,
+               linewidth.median.line = 0.8, alpha1 =alpha1 )
+ggsave("Figures/SB_SBMSY_Grid.png",
+       width=11, height=5.5)
+
+
 
 
 plotQuilt(Slick)
@@ -13,13 +101,15 @@ plotQuilt(SlickGrid, kable=TRUE)
 
 
 plotTimeseries(Slick, 3, byMP=TRUE)
+plotTimeseries(SlickGrid, 3, byMP=TRUE)
+
 
 L <- Landings(MSE)
 L |> dplyr::filter()
 
 L |> dplyr::filter(MP=='IT1') |>
   dplyr::group_by(TimeStep) |>
-  dplyr::summarise(max(Value))
+  dplyr::summarise(mean(Value))
 
 
 TACs <- GetTAC(MSE)
@@ -63,9 +153,16 @@ for (i in seq_along(ManagementTS)) {
 
 do.call('rbind', List)
 
+library(MSEtool)
 
-Data <- MSE@PPD$IT1[[sim]]$Albacore  |> DataTrim(TimeStep=ManagementTS[i]-1)
+MSE <- readRDS('MSE/Stochastic.mse')
+Data <- MSE@PPD$IT1[[sim]]$Albacore  
 Data@TAC
+
+Data2 <- Data |> DataTrim(TimeStep=2025)
+
+Data2@TAC
+
 
 DataTrim
 

@@ -253,6 +253,7 @@ Potential additional uncertainties could include:
 The uncertainty in the continuous life-history parameters was deal with in two ways: a discrete uncertainty grid and stochastic sampling of the life-history parameters from a continuous distribution.
 
 ## Discrete Uncertainty Grid
+
 A discrete OM Uncertainty Grid was developed assuming three levels for each parameter. This approach follows the methodology used in other ICCAT MSE processes, and results in 9 individual operating models, each with discrete values from the factorial combinations of the axes and levels of uncertainty (Table \@ref(tab:LH-grid)).
 
 ```{r LH-grid}
@@ -270,6 +271,7 @@ knitr::kable(Grid, caption = "The values used in the discrete uncertainty grid."
 ```
 
 ## Stochastic Sampling
+
 The second approach involved sampling `r nsim` values of the life-history parameters from a multivariate distribution, and running the OM Conditioning model (see next section) for each simulation. A single OM was then generated, incorporating the output of the `r nsim` fits to the data with the stochastic life-history parameters.
 
 The methodology for sampling the life-history parameters was based on the methodology developed by @taylor2024 for the Southern Atlantic Swordfish.
@@ -349,7 +351,6 @@ A minimum CV of 0.2 was assumed for all indices. The effective sample size for t
 #   kableExtra::kable_styling(full_width = F)
 
 ```
-
 
 ### RCM Base Mean
 

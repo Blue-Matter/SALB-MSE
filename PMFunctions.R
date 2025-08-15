@@ -28,21 +28,8 @@ MeanLandings <- function(MSE) {
                      Variable='Mean Landings')
 }
 
-GetTAC <- function(MSE) {
-  
-  TimeStepsDF <- MSEtool:::TimeStepsDF(MSE)
-  
-  purrr::map(MSE@PPD, \(DataMP) 
-             purrr::map(DataMP, \(DataSim) {
-               purrr::map(DataSim, \(DataStock) DataStock@TAC) |> List2Array('Stock')
-             }) |> List2Array('Sim')
-  ) |> List2Array('MP') |>
-    array2DF() |>
-    MSEtool:::ConvertDF() |>
-    dplyr::mutate(Variable='TAC') |>
-    dplyr::left_join(TimeStepsDF, by='TimeStep') |>
-    dplyr::arrange("Sim", "Stock", 'TimeStep', 'Value', 'Variable', 'Period', 'MP')
-}
+# TODO - add to MSEtool
+
 
 CalcVar <- function(vals) {
   ind <- seq_along(vals)
@@ -51,27 +38,26 @@ CalcVar <- function(vals) {
   sqrt(((vals[ind1]-vals[ind2])/vals[ind2])^2) |> mean() 
 }
 
-CalcAvgVar <- function(MSE, type=c('TAC', 'Landings', 'Removals')) {
+AvgVar <- function(MSE, type=c('TAC', 'Landings', 'Removals')) {
   type <- match.arg(type)
   if (type != 'TAC')
     cli::cli_abort("Only `type='TAC'` currently supported", .internal=TRUE)
   
-  GetTAC(MSE) |> dplyr::filter(is.na(Value)==FALSE) |>
+  TACs(MSE) |> dplyr::filter(is.na(Value)==FALSE) |>
     dplyr::group_by(Sim, MP) |>
     dplyr::reframe(Value=CalcVar(Value),
                    Variable=paste0('AvgVar', type)) 
 }
 
 
-Stability <- function(MSE, Ref=0.2, type=c('TAC', 'Landings', 'Removals')) {
+Stability <- function(MSE, type=c('TAC', 'Landings', 'Removals')) {
   type <- match.arg(type)
   
-  Variable <- paste0('AvgVar', type, ' < ', Ref)
+  Variable <- paste0('AvgVar', type)
   
-  CalcAvgVar(MSE, type) |>
-    dplyr::ungroup() |>
+  AvgVar(MSE, type) |>
     dplyr::group_by(MP) |>
-    dplyr::summarise(Value=mean(Value<Ref)) |>
+    dplyr::summarise(Value=mean(Value)) |>
     dplyr::ungroup() |>
     dplyr::mutate(Variable=Variable)
 }

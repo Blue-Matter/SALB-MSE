@@ -5,7 +5,6 @@ source('PMFunctions.R')
 
 # ---- Stochastic ----
 
-
 MSE <- readRDS('MSE/Stochastic.mse')
 
 # OPERATIONAL MANAGEMENT OBJECTIVES FOR SOUTHERN ATLANTIC ALBACORE
@@ -56,6 +55,7 @@ Value(Quilt) <- Value
 Quilt(Slick) <- Quilt
 saveRDS(Slick, 'Slick/Stochastic.slick')
 
+## QUILT - REVERSE COLOR OPTION !!
 
 
 # ---- Grid ----

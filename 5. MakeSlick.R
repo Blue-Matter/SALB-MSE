@@ -31,7 +31,7 @@ saveRDS(Slick, 'Slick/Stochastic.slick')
 # ----- Uncertainty Grid ------
 
 MSEFiles <- list.files('MSE', full.names = TRUE)
-GridMSEFiles <- MSEFiles[-c(grep("Stochastic.mse", MSEFiles),grep("Base.mse", MSEFiles))]
+GridMSEFiles <- MSEFiles[-c(grep("Stochastic", MSEFiles),grep("Base.mse", MSEFiles))]
 
 MSEList <- purrr::map(GridMSEFiles, readRDS)
 SlickGrid <- MSE2Slick(MSEList)
