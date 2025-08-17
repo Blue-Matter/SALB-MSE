@@ -2,10 +2,13 @@
 title: "South Atlantic Albacore MSE"
 ---
 
-Hello, Website!
+Welcome to the South Atlantic Albacore (SALB) MSE Homepage. 
 
-For more information about simple R Markdown websites, please read the documentation at https://bookdown.org/yihui/rmarkdown/rmarkdown-site.html.
+This site is in development.
 
-Please also note that simple R Markdown sites are _not_ based on **blogdown**. They are probably good for websites with only a few Rmd documents. For larger-scale and more sophisticated websites (such as blogs), you may want to use **blogdown** instead: https://github.com/rstudio/blogdown.
+It will be updated as the SALB MSE Project develops.
 
-[Technical Specifications Document](TS.html)
+# Documents
+
+- [MSE Technical Specifications Document](TS.html)
+- [Stock Synthesis 3 Specifications and Diagnostics](ALB_S_SS3_2025_v00.pdf)
