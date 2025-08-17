@@ -16,6 +16,7 @@ output:
     toc_depth: 2
     use_bookdown: yes
 urlcolor: blue
+always_allow_html: true
 bibliography: references.bib
 ---
 
@@ -33,22 +34,11 @@ library(ggExtra)
 nsim <- 200
 ```
 
-This document describes the technical details of the management strategy evaluation (MSE) framework being developed for the Southern Atlantic albacore (SALB) tuna fishery. This project is supported by the Marine Stewardship Council's [Ocean Stewardship Fund](https://www.msc.org/what-we-are-doing/our-collective-impact/ocean-stewardship-fund/impact-projects/south-atlantic-albacore-tuna-harvest-strategy-project-2025) with a multi-stakeholder collaboration between ICCAT members, fisheries and NGOs.
+This document describes the technical details of the management strategy evaluation (MSE) framework being developed for the Southern Atlantic albacore (SALB) tuna fishery.
+
+See the [SALB MSE Homepage](index.html) for more general information on the SALB MSE Project.
 
 This is a living document and will be continually updated as the project progresses.
-
-The overall objective of this project is to develop candidate management procedures (CMPs) for the SALB fishery, test their performance across the key uncertainties in the knowledge of the fishery dynamics, and adopt the harvest strategy that has is most likely to achieve the fishery's management objectives.
-
-The project is currently in its initial phase, with the following aims:
-
-1.  Develop an MSE framework for SALB;
-2.  Develop base case operating models (OM) with two different modelling frameworks: [Stock Synthesis 3](https://nmfs-ost.github.io/ss3-website/) (SS3) and the [Rapid Conditioning Model](https://openmse.com/tutorial-rcm/) (RCM), and compare their results;
-3.  Identify the primary uncertainties in the knowledge of the fishery system;
-4.  Develop an OM Grid spanning the uncertainties and condition OMs using SS3 (OM Grid Approach);
-5.  Develop a single stochastic OM conditioned with RCM that spans the uncertainties included in the SS3 Grid (Stochastic OM Approach);
-6.  Compare the results of the OM Grid Approach and Stochastic OM Approach and discuss the relative pros and cons of the two methodologies.
-
-The intention of this initial phase is to demonstrate the SALB MSE framework and compare the results of the two methods for conditioning the operating models.
 
 Currently the model uses SALB data up to 2018. It will be updated with the most recent fishery data one the demonstration MSE framework has been reviewed by representatives of the managers and stakeholders.
 
@@ -56,7 +46,7 @@ Similarly, the life-history parameters and other technical specifications of the
 
 # Data
 
-The operating models have been conditioned using the same data used in the most recent stock assessments [@winker2020; @matsumoto2020].
+The operating models have been conditioned using the same data used in the most recent stock assessments, conducted in 2020 with data up to 2018 [@winker2020; @matsumoto2020].
 
 ## Catch
 
@@ -178,7 +168,7 @@ ggplot(CAL) +
 
 # Base Life-History Parameters
 
-Table \@ref(tab:LH-base-case) shows the life history parameters for the Base Case operating model.
+Table \@ref(tab:LH-base-case) shows the base case values of the life history parameters.
 
 ```{r LH-base-case}
 
@@ -250,29 +240,18 @@ Potential additional uncertainties could include:
 3.  Variation in the maturity parameters (e.g., bounded by the confidence intervals reported by @travassos2024)
 4.  Variation in the recruitment deviations $(\sigma_R)$
 
-The uncertainty in the continuous life-history parameters was deal with in two ways: a discrete uncertainty grid and stochastic sampling of the life-history parameters from a continuous distribution.
+The uncertainty in the continuous life-history parameters was deal with in two ways:
 
-## Discrete Uncertainty Grid
+1.  Stochastic sampling of the life-history parameters from a multivariate distribution, and
+2.  A discrete uncertainty grid following the methodology used in other ICCAT MSE processes (see the ICCAT MSE webpage for details [<https://iccat.github.io/iccat-mse-web/>](<https://iccat.github.io/iccat-mse-web/>)).
 
-A discrete OM Uncertainty Grid was developed assuming three levels for each parameter. This approach follows the methodology used in other ICCAT MSE processes, and results in 9 individual operating models, each with discrete values from the factorial combinations of the axes and levels of uncertainty (Table \@ref(tab:LH-grid)).
+The latter approach has been used in several other ICCAT MSE processes, and the approach may be more familiar to ICCAT, the SCRS, and other stakeholders who have been involved in those MSE processes. However, the former approach is much more computationally efficient than the latter, and has the advantage that is can account for both down-weighting of less likely life-history parameters and correlations between life-history parameters.
 
-```{r LH-grid}
-
-Grid <- data.frame(OM=1:9,
-                   M=rep(c(0.3, 0.35, 0.4),3),
-                   h=rep(c(0.7, 0.8, 0.9), each=3)
-)
-  
-knitr::kable(Grid, caption = "The values used in the discrete uncertainty grid.",
-             format = "html",
-             digits=2) |>
-  kableExtra::kable_styling(full_width = T)
-
-```
+An objective in this initial stage of the SALB MSE project is to demonstrate the advantages of the *Stochastic Sampling* approach and have this approach adopted by the SCRS for the development of the SALB MSE.
 
 ## Stochastic Sampling
 
-The second approach involved sampling `r nsim` values of the life-history parameters from a multivariate distribution, and running the OM Conditioning model (see next section) for each simulation. A single OM was then generated, incorporating the output of the `r nsim` fits to the data with the stochastic life-history parameters.
+The *Stochastic Sampling* approach involved sampling `r nsim` values of the life-history parameters from a multivariate distribution, and running the OM Conditioning model (see next section) for each simulation. A single OM was then generated, incorporating the output of the `r nsim` fits to the data with the stochastic life-history parameters.
 
 The methodology for sampling the life-history parameters was based on the methodology developed by @taylor2024 for the Southern Atlantic Swordfish.
 
@@ -309,115 +288,113 @@ p <- ggplot(Stochastic, aes(x=M, y=h)) +
 ggExtra::ggMarginal(p, type='histogram')
 ```
 
+## Discrete Uncertainty Grid
+
+The *Discrete Uncertainty Grid* assumed three levels for the two life-history parameters, resulting in 9 individual operating models, each with discrete values from the factorial combinations of the axes and levels of uncertainty (Table \@ref(tab:LH-grid)).
+
+The analysis of the *Discrete Uncertainty Grid* involves running the MSE for each of the OMs in the grid, and then calculating the performance metrics over the combined MSE results.
+
+```{r LH-grid}
+
+Grid <- data.frame(OM=1:9,
+                   M=rep(c(0.3, 0.35, 0.4),3),
+                   h=rep(c(0.7, 0.8, 0.9), each=3)
+)
+  
+knitr::kable(Grid, caption = "The values used in the discrete uncertainty grid.",
+             format = "html",
+             digits=2) |>
+  kableExtra::kable_styling(full_width = T)
+```
+
 # OM Conditioning
 
-The Operating Models were conditioned using two different modelling frameworks: [Stock Synthesis 3](https://nmfs-ost.github.io/ss3-website/) (SS3) and the [Rapid Conditioning Model](https://openmse.com/tutorial-rcm/) (RCM).
+The Operating Models were conditioned with [Stock Synthesis 3](https://nmfs-ost.github.io/ss3-website/) (SS3). The operating models had `r nsim` simulations and a 30-year projection period.
 
-The operating models had `r nsim` simulations and a 30-year projection period.
+## Stock Synthesis 3 Specifications
 
-## Stock Synthesis 3
+A one-area, combined sex, yearly structured model was implemented for the SALB stock using SS3 version 3.30.23.1 [@methot2013]. The available time series of catch, abundance indices, and length composition data considered in the SS3 model runs were assigned to specific "fleets" and "surveys", with the survey structure used to incorporate the abundance index associated with each fleet (see Section \@ref(data) above). The model was configured to cover the period from 1956 to 2018, using the same datasets applied in the most recent stock assessments [@winker2020; @matsumoto2020] for conditioning.
 
-TBD
+Recruitment was modeled using a Beverton–Holt stock–recruitment relationship. Preliminary SS3 outputs examined with the *r4ss* package [@taylor2021] indicated limited recruitment information prior to \~1966, when only one fleet provided length compositions and no abundance indices were available. Consequently, estimation of main recruitment deviations began in 1967, with early deviations starting six years earlier, and was truncated in 2015 to reduce potential bias from the limited length data near the terminal year.
 
-## Rapid Conditioning Model (RCM)
+Fecundity was modeled as female spawning stock biomass (weight-at-age × maturity ogive) and assumed proportional to length (eggs = a × Lᵇ). Length composition data from ICCAT were assigned to fleets 1–5, excluding years with \<100 measured fish. To reduce the influence of extreme annual sample sizes, original values (ONsamps) were rescaled using a power function (Nsamps = ONsamps^0.25^). The assessment used 36 length bins (20–195 cm FL, 5 cm intervals). A double normal selectivity function was fitted in SS3 for all fleets, with initial parameters obtained by visually fitting curves to each fleet’s data using the R Shiny Stock Assessment Continuum Tool [@cope2025].
 
-The RCM was used to condition two different OMs: *RCM* *Base Mean* and *RCM* *Base Stochastic.*
+A two-stage data weighting approach [@francis2011], following Courtney et al. [-@courtney2017], was applied. In stage one, a minimum average SE (log scale) for each abundance index was set in SS3, estimated from the residual variance of a smoothed CPUE series, with a minimum SE of 0.2 enforced (values below this threshold fixed at 0.2). In stage two, effective sample sizes for length compositions were derived from SS3 residuals using the Francis [-@francis2011] method.
 
-The model was run assuming a dome-shaped selectivity pattern all fleets.
+## Reference Operating Models
 
-```{=html}
-<!--#
-for the long-line fleets (LL) and dome-shaped for the purse-seine (PS) and bait boats (BB; Table \@ref(tab:selectivity-table)).  
--->
-```
+The Reference OMs spanned the primary uncertainties in the life-history parameters for this stock (see Section \@ref(uncertainties-in-life-history-parameters)).
 
-A minimum CV of 0.2 was assumed for all indices. The effective sample size for the length composition data was set to 50.
+Reference OMs were generated using both the *Stochastic Sampling* and *Discrete Uncertainty Grid* approaches described above.
 
-```{r selectivity-table}
+### Stochastic Sampling
 
-# df <- CatchFleetDF
-# df <- df |> 
-#   dplyr::select(-Time.Period) |>
-#   dplyr::mutate(Selectivity=c('Logistic',
-#                                'Logistic',
-#                                'Logistic',
-#                                'Logistic',
-#                                'Logistic',
-#                                'Dome',
-#                                'Dome',
-#                                'Logistic'))
-# 
-# knitr::kable(df, caption = "The assumed selectivity patterns for the 8 fleets used in the RCM OM Conditioning.", format = "html") |>
-#   kableExtra::kable_styling(full_width = F)
+The *Stochastic Sampling* approach involved running the SS3 model for each of the `r nsim` samples of the life-history parameters, and then generating a single OM with `r nsim` predictions of the historical fishery dynamics; i.e., a single OM that includes the stochastic variability in the life-history parameters.
 
-```
+### Uncertainty Grid
 
-### RCM Base Mean
+The *Uncertainty Grid* approach involved generating 9 OMs from the factorial grid (Table \@ref(tab:LH-grid)).
 
-The *RCM* *Base Mean* OM was conditioned using the mean value of the stochastic life-history parameters (see Section \@ref(uncertainties-in-life-history-parameters)); i.e., all life-history parameters were identical across the individual simulations.
+## Robustness Operating Models
 
-In this OM, the historical fishery dynamics are identical across the simulations, with stochastic recruitment deviations and observation error in the projection period.
+Robustness OMs have not yet been developed for SALB.
 
-This OM is used to compare the predictions of RCM with the output of SS3 with the same structure and assumed parameter values.
+Potential Robustness OMs may include:
 
-### RCM Base Stochastic
+-   uncertainty in TAC implementation (e.g., overages in TAC)
 
-The *RCM* *Base Stochastic* OM was generated by running the RCM `r nsim` times (each simulation) and randomly sampling the stochastic life-history parameters (see Section \@ref(uncertainties-in-life-history-parameters)).
-
-In this OM, there are `r nsim` predictions of the historical fishery dynamics; i.e., a single OM that includes the stochastic variability in the life-history parameters.
+-   impacts of climate change (e.g., time-varying life-history parameters)
 
 # Historical Fishery Dynamics
 
-> This section will be updated with a comparison of the output of both the SS3 and RCM OMs.
-
-Figure \@ref(fig:rcm-hist) shows the time series plots of the estimated SB/SBMSY for the RCM Base Mean and RCM Base Stochastic OMs.
+> TBD
 
 ```{r rcm-hist, fig.cap='Time series plots of the estimated SB/SBMSY for the RCM Base Mean and RCM Base Stochastic OMs.', fig.height=4.5, fig.width=8}
 
-OM_Mean <- readRDS('../OM/RCM_Mean.om')
-Hist_Mean <- readRDS('../Hist/RCM_Mean.hist')
-Hist_Stochastic <- readRDS('../Hist/RCM_Stochastic.hist')
-
-
-HistYears <- seq(OM_Mean@CurrentYr, by=-1, length.out=OM_Mean@nyears) |> rev()
-
-SB_SBMSY_Mean <- apply(Hist_Mean@TSdata$SBiomass, 1:2, sum)/matrix(Hist_Mean@Ref$ReferencePoints$SSBMSY, OM_Mean@nsim, OM_Mean@nyears, byrow=FALSE)
-dimnames(SB_SBMSY_Mean) <- list(Sim=1:OM_Mean@nsim,
-                                Year=HistYears)
-SB_SBMSY_Stochastic <- apply(Hist_Stochastic@TSdata$SBiomass, 1:2, sum)/matrix(Hist_Stochastic@Ref$ReferencePoints$SSBMSY, OM_Mean@nsim, OM_Mean@nyears, byrow=FALSE)
-
-dimnames(SB_SBMSY_Stochastic) <- list(Sim=1:OM_Mean@nsim,
-                                Year=HistYears)
-
-
-SB_SBMSY_Mean <- array2DF(SB_SBMSY_Mean)
-SB_SBMSY_Mean$Year <- as.numeric(SB_SBMSY_Mean$Year)
-SB_SBMSY_Mean$Value <- as.numeric(SB_SBMSY_Mean$Value)
-SB_SBMSY_Mean$Model <- 'Mean'
-
-SB_SBMSY_Stochastic <- array2DF(SB_SBMSY_Stochastic)
-SB_SBMSY_Stochastic$Year <- as.numeric(SB_SBMSY_Stochastic$Year)
-SB_SBMSY_Stochastic$Value <- as.numeric(SB_SBMSY_Stochastic$Value)
-SB_SBMSY_Stochastic$Model <- 'Stochastic'
-
-df <- dplyr::bind_rows(SB_SBMSY_Mean, SB_SBMSY_Stochastic)
-
-
-ggplot(df, aes(x=Year, y=Value, group=Sim)) +
-  facet_wrap(~Model) +
-  geom_line() +
-  expand_limits(y=0) +
-  labs(y='SB/SBMSY') +
-  geom_hline(yintercept =1, linetype=2) +
-  theme_bw()
+# OM_Mean <- readRDS('../OM/RCM_Mean.om')
+# Hist_Mean <- readRDS('../Hist/RCM_Mean.hist')
+# Hist_Stochastic <- readRDS('../Hist/RCM_Stochastic.hist')
+# 
+# 
+# HistYears <- seq(OM_Mean@CurrentYr, by=-1, length.out=OM_Mean@nyears) |> rev()
+# 
+# SB_SBMSY_Mean <- apply(Hist_Mean@TSdata$SBiomass, 1:2, sum)/matrix(Hist_Mean@Ref$ReferencePoints$SSBMSY, OM_Mean@nsim, OM_Mean@nyears, byrow=FALSE)
+# dimnames(SB_SBMSY_Mean) <- list(Sim=1:OM_Mean@nsim,
+#                                 Year=HistYears)
+# SB_SBMSY_Stochastic <- apply(Hist_Stochastic@TSdata$SBiomass, 1:2, sum)/matrix(Hist_Stochastic@Ref$ReferencePoints$SSBMSY, OM_Mean@nsim, OM_Mean@nyears, byrow=FALSE)
+# 
+# dimnames(SB_SBMSY_Stochastic) <- list(Sim=1:OM_Mean@nsim,
+#                                 Year=HistYears)
+# 
+# 
+# SB_SBMSY_Mean <- array2DF(SB_SBMSY_Mean)
+# SB_SBMSY_Mean$Year <- as.numeric(SB_SBMSY_Mean$Year)
+# SB_SBMSY_Mean$Value <- as.numeric(SB_SBMSY_Mean$Value)
+# SB_SBMSY_Mean$Model <- 'Mean'
+# 
+# SB_SBMSY_Stochastic <- array2DF(SB_SBMSY_Stochastic)
+# SB_SBMSY_Stochastic$Year <- as.numeric(SB_SBMSY_Stochastic$Year)
+# SB_SBMSY_Stochastic$Value <- as.numeric(SB_SBMSY_Stochastic$Value)
+# SB_SBMSY_Stochastic$Model <- 'Stochastic'
+# 
+# df <- dplyr::bind_rows(SB_SBMSY_Mean, SB_SBMSY_Stochastic)
+# 
+# 
+# ggplot(df, aes(x=Year, y=Value, group=Sim)) +
+#   facet_wrap(~Model) +
+#   geom_line() +
+#   expand_limits(y=0) +
+#   labs(y='SB/SBMSY') +
+#   geom_hline(yintercept =1, linetype=2) +
+#   theme_bw()
 ```
 
-## Comparision of Base Mean OMs
+# Candidate Management Procedures
 
-> Compare Base Mean SS3 and RCM output
+> TBD
 
-## Comparison of Base Stochastic OMs
+# Performance Metrics
 
-> Compare Base Stochastic SS3 and RCM output
+> TBD
 
 # References

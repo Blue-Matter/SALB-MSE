@@ -4,11 +4,17 @@ title: "South Atlantic Albacore MSE"
 
 Welcome to the South Atlantic Albacore (SALB) MSE Homepage. 
 
-This site is in development.
+![](https://www.fisheries.noaa.gov/s3//styles/original/s3/2022-09/640x427-Tuna-Albacore-NOAAFisheries.png?itok=juwiBfWn){width=50%}
 
-It will be updated as the SALB MSE Project develops.
+This project is supported by the Marine Stewardship Council's [Ocean Stewardship Fund](https://www.msc.org/what-we-are-doing/our-collective-impact/ocean-stewardship-fund/impact-projects/south-atlantic-albacore-tuna-harvest-strategy-project-2025) with a multi-stakeholder collaboration between ICCAT members, fisheries and NGOs.
+
+The overall objective of this project is to develop candidate management procedures (CMPs) for the SALB fishery, test their performance across the key uncertainties in the knowledge of the fishery dynamics, and adopt the harvest strategy that has is most likely to achieve the fishery's management objectives.
+
+The project is currently in its initial phase, with the aim of developing the MSE framework and demonstrating its application using example operating models (OMs), candidate management procedures (CMPs), and initial performance indicators (PIs) 
+
+The MSE framework will be reviewed by the SCRS and then updated with the most recently available fishery data, and revised OMs, CMPs, and PIs according to feedback by the SCRS. 
 
 # Documents
+- <a href="TS.html" target="_blank">MSE Technical Specifications Document</a>
+- <a href="ALB_S_SS3_2025_v00.pdf" target="_blank">Stock Synthesis 3 Specifications and Diagnostics</a>
 
-- [MSE Technical Specifications Document](TS.html)
-- [Stock Synthesis 3 Specifications and Diagnostics](ALB_S_SS3_2025_v00.pdf)

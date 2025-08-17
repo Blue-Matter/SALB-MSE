@@ -36,11 +36,11 @@ StabilityPI <- Stability(MSE)
 Slick <- readRDS('Slick/Stochastic.slick')
 Quilt <- Quilt()
 Code(Quilt) <- c('Status', 'Safety', 'Yield', 'Stability')
-Label(Quilt) <- c('Status', 'Safety', 'Yield', 'Stability')
+Label(Quilt) <- c('Status', 'Safety', 'Mean Yield', 'Avg Variability')
 Description(Quilt) <- c('Probability Green Kobe', 
                         'Probability SB>0.4SBMSY', 
                         'Mean Yield', 
-                        'Probability Avg Variability in TAC < 20%')
+                        'Avg Variability in TAC')
 
 nMP <- length(MSE@MPs)
 nOM <- 1
@@ -67,11 +67,11 @@ SlickGrid <- readRDS('Slick/Grid.slick')
 
 Quilt <- Quilt()
 Code(Quilt) <- c('Status', 'Safety', 'Yield', 'Stability')
-Label(Quilt) <- c('Status', 'Safety', 'Yield', 'Stability')
+Label(Quilt) <- c('Status', 'Safety', 'Mean Yield', 'Avg Variability')
 Description(Quilt) <- c('Probability Green Kobe', 
                         'Probability SB>0.4SBMSY', 
                         'Mean Yield', 
-                        'Probability Avg Variability in TAC < 20%')
+                        'Avg Variability in TAC')
 
 nMP <- length(MSE@MPs)
 nOM <- length(MSEList)
