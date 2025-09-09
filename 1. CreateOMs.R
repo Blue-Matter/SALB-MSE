@@ -5,8 +5,6 @@ if (!packageVersion('MSEtool') >= '4.0.0') {
   pak::pkg_install('blue-matter/MSEtool@dev')
 }
 
-SSDir <- 'Condition/SS3/ALB-S_Stochastic/Condition/SS3'
-
 
 # OM Specifications 
 nsim <- 200
@@ -23,28 +21,29 @@ DataLag <- 1 # lagged by 1 year?
 source('Condition/LifeHistoryParameters.R')
 
 
-# Mean SS ----
-replist <- ImportSSReport(file.path(SSDir, 'Base'))
-# fl <- tempfile()
-# fl 
-# saveRDS(replist, fl)
-
-SS_Mean <- ImportSS(file.path(SSDir, 'Base'), 
-                    nSim=nsim, 
-                    pYear = proyears,
-                    Name=Name,
-                    Agency=Agency,
-                    Region=Region,
-                    StockName=StockName,
-                    Species=Species,
-                    Interval=Interval,
-                    DataLag=DataLag)
-
-saveRDS(SS_Mean, 'OM/Base.om')
+# # Mean SS ----
+# replist <- ImportSSReport(file.path(SSDir, 'Base'))
+# # fl <- tempfile()
+# # fl 
+# # saveRDS(replist, fl)
+# 
+# SS_Mean <- ImportSS(file.path(SSDir, 'Base'), 
+#                     nSim=nsim, 
+#                     pYear = proyears,
+#                     Name=Name,
+#                     Agency=Agency,
+#                     Region=Region,
+#                     StockName=StockName,
+#                     Species=Species,
+#                     Interval=Interval,
+#                     DataLag=DataLag)
+# 
+# saveRDS(SS_Mean, 'OM/Base.om')
 
 
 # Grid ----
-GridDir <- 'Condition/SS3/ALB-S_Unc-Grid'
+
+GridDir <- 'G:/Shared drives/BM shared/1. Projects/TOF-MSE-SALB/ALB-S_Unc-Grid/ALB-S_Unc-Grid'
 GridDirs <- list.dirs(file.path(GridDir), full.names = FALSE, recursive = FALSE)
 
 for (i in seq_along(GridDirs)) {
@@ -67,6 +66,7 @@ for (i in seq_along(GridDirs)) {
 
 
 # Stochastic ---- 
+SSDir <- "G:/Shared drives/BM shared/1. Projects/TOF-MSE-SALB/ALB-S_Stochastic/ALB-S_Stochastic/Condition/SS3"
 StochasticDirs <- list.dirs(file.path(SSDir), full.names = FALSE, recursive = FALSE)
 StochasticDirs <- StochasticDirs[!grepl('Base', StochasticDirs)]
 
