@@ -321,6 +321,8 @@ Fecundity was modeled as female spawning stock biomass (weight-at-age × maturit
 
 A two-stage data weighting approach [@francis2011], following Courtney et al. [-@courtney2017], was applied. In stage one, a minimum average SE (log scale) for each abundance index was set in SS3, estimated from the residual variance of a smoothed CPUE series, with a minimum SE of 0.2 enforced (values below this threshold fixed at 0.2). In stage two, effective sample sizes for length compositions were derived from SS3 residuals using the Francis [-@francis2011] method.
 
+More details on the SS3 specifications and model diagnostics can be found [here](https://salb-mse.bluematterscience.com/ALB_S_SS3_2025_v00.pdf).
+
 ## Reference Operating Models
 
 The Reference OMs spanned the primary uncertainties in the life-history parameters for this stock (see Section \@ref(uncertainties-in-life-history-parameters)).
@@ -345,56 +347,5 @@ Potential Robustness OMs may include:
 
 -   impacts of climate change (e.g., time-varying life-history parameters)
 
-# Historical Fishery Dynamics
-
-> TBD
-
-```{r rcm-hist, fig.cap='Time series plots of the estimated SB/SBMSY for the RCM Base Mean and RCM Base Stochastic OMs.', fig.height=4.5, fig.width=8}
-
-# OM_Mean <- readRDS('../OM/RCM_Mean.om')
-# Hist_Mean <- readRDS('../Hist/RCM_Mean.hist')
-# Hist_Stochastic <- readRDS('../Hist/RCM_Stochastic.hist')
-# 
-# 
-# HistYears <- seq(OM_Mean@CurrentYr, by=-1, length.out=OM_Mean@nyears) |> rev()
-# 
-# SB_SBMSY_Mean <- apply(Hist_Mean@TSdata$SBiomass, 1:2, sum)/matrix(Hist_Mean@Ref$ReferencePoints$SSBMSY, OM_Mean@nsim, OM_Mean@nyears, byrow=FALSE)
-# dimnames(SB_SBMSY_Mean) <- list(Sim=1:OM_Mean@nsim,
-#                                 Year=HistYears)
-# SB_SBMSY_Stochastic <- apply(Hist_Stochastic@TSdata$SBiomass, 1:2, sum)/matrix(Hist_Stochastic@Ref$ReferencePoints$SSBMSY, OM_Mean@nsim, OM_Mean@nyears, byrow=FALSE)
-# 
-# dimnames(SB_SBMSY_Stochastic) <- list(Sim=1:OM_Mean@nsim,
-#                                 Year=HistYears)
-# 
-# 
-# SB_SBMSY_Mean <- array2DF(SB_SBMSY_Mean)
-# SB_SBMSY_Mean$Year <- as.numeric(SB_SBMSY_Mean$Year)
-# SB_SBMSY_Mean$Value <- as.numeric(SB_SBMSY_Mean$Value)
-# SB_SBMSY_Mean$Model <- 'Mean'
-# 
-# SB_SBMSY_Stochastic <- array2DF(SB_SBMSY_Stochastic)
-# SB_SBMSY_Stochastic$Year <- as.numeric(SB_SBMSY_Stochastic$Year)
-# SB_SBMSY_Stochastic$Value <- as.numeric(SB_SBMSY_Stochastic$Value)
-# SB_SBMSY_Stochastic$Model <- 'Stochastic'
-# 
-# df <- dplyr::bind_rows(SB_SBMSY_Mean, SB_SBMSY_Stochastic)
-# 
-# 
-# ggplot(df, aes(x=Year, y=Value, group=Sim)) +
-#   facet_wrap(~Model) +
-#   geom_line() +
-#   expand_limits(y=0) +
-#   labs(y='SB/SBMSY') +
-#   geom_hline(yintercept =1, linetype=2) +
-#   theme_bw()
-```
-
-# Candidate Management Procedures
-
-> TBD
-
-# Performance Metrics
-
-> TBD
 
 # References
