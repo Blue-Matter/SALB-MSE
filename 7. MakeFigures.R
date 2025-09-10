@@ -19,7 +19,7 @@ ggsave('Figures/M_h_plot.png', p, width=4, height=4)
 OM <- readRDS("OM/Stochastic.om")
 Hist <- readRDS("Hist/Stochastic.hist")
 
-SBiomass(Hist) |> dplyr::filter(TimeStep==max(TimeStep)) |>
+SProduction(Hist) |> dplyr::filter(TimeStep==max(TimeStep)) |>
   dplyr::summarise(Lower=quantile(Value, 0.025),
                    Median=median(Value),
                    Upper=quantile(Value, 0.975)) |>
@@ -38,7 +38,7 @@ F_FMSY(Hist) |> dplyr::filter(TimeStep==max(TimeStep)) |>
                    Upper=quantile(Value, 0.975)) |>
   dplyr::mutate(Variable='F/FMSY')
 
-RemovalsMSY(Hist) |> dplyr::filter(TimeStep==max(TimeStep)) |>
+MSY(Hist) |> dplyr::filter(TimeStep==max(TimeStep)) |>
   dplyr::summarise(Lower=quantile(Value, 0.025),
                    Median=median(Value),
                    Upper=quantile(Value, 0.975)) |>
@@ -107,6 +107,16 @@ plotKobe(Slick, Time=T, ncol=2,
          strip.text.size = 12)
 ggsave("Figures/KobeTime_Stochastic.png",
        width=4, height=4)
+
+plotKobe(SlickGrid, Time=T, ncol=2,
+         axis.text.size = 10,
+         axis.title.size = 12,
+         strip.text.size = 12)
+ggsave("Figures/KobeTime_Grid.png",
+       width=4, height=4)
+
+
+
 
 
 
@@ -355,7 +365,7 @@ LastTAC <- function(Data) {
   CheckClass(Data, 'data', 'Data')
   LastTAC <- tail(Data@TAC[!is.na(Data@TAC)],1) |> as.numeric()
   if (length(LastTAC)<1)
-    LastTAC <- tail(Data@Catch@Value,1) |> sum()
+    LastTAC <- sum(tail(Data@Landings@Value,1) + tail(Data@Discards@Value,1))
   LastTAC
 }
 

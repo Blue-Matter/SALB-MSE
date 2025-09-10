@@ -13,12 +13,15 @@ Status <- function(MSE) {
 }
 
 
+
 Safety <- function(MSE, Ref=0.4) {
   SB_SBMSY(MSE) |> 
-  dplyr::filter(Period=='Projection') |>
-  dplyr::group_by(MP) |>
-  dplyr::summarise(Value=mean(Value>Ref),
-                   Variable='Safety')
+    dplyr::filter(Period=='Projection') |>
+    dplyr::mutate(Above=Value>=Ref) |> 
+    dplyr::group_by(MP, Sim) |>
+    dplyr::mutate(AboveAll=prod(Above)) |>
+    dplyr::group_by(MP) |>
+    dplyr::summarise(Value=mean(AboveAll))
 }
 
 MeanLandings <- function(MSE) {

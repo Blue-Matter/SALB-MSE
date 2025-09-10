@@ -9,6 +9,10 @@ for (i in seq_along(OMFiles)) {
   histfile <- paste0(gsub('.om', '', omfile), '.hist')
   
   OM <- readRDS(file.path("OM", omfile))
+  
+
+  
   Hist <- Simulate(OM)
+  
   saveRDS(Hist, file.path('Hist', histfile))
 }

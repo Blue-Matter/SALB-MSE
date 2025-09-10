@@ -243,7 +243,7 @@ Potential additional uncertainties could include:
 The uncertainty in the continuous life-history parameters was deal with in two ways:
 
 1.  Stochastic sampling of the life-history parameters from a multivariate distribution, and
-2.  A discrete uncertainty grid following the methodology used in other ICCAT MSE processes (see the ICCAT MSE webpage for details [<https://iccat.github.io/iccat-mse-web/>](<https://iccat.github.io/iccat-mse-web/>)).
+2.  A discrete uncertainty grid following the methodology used in other ICCAT MSE processes (see the ICCAT MSE webpage for details [\<https://iccat.github.io/iccat-mse-web/\>](https://iccat.github.io/iccat-mse-web/)).
 
 The latter approach has been used in several other ICCAT MSE processes, and the approach may be more familiar to ICCAT, the SCRS, and other stakeholders who have been involved in those MSE processes. However, the former approach is much more computationally efficient than the latter, and has the advantage that is can account for both down-weighting of less likely life-history parameters and correlations between life-history parameters.
 
@@ -346,6 +346,5 @@ Potential Robustness OMs may include:
 -   uncertainty in TAC implementation (e.g., overages in TAC)
 
 -   impacts of climate change (e.g., time-varying life-history parameters)
-
 
 # References

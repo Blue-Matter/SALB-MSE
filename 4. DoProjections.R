@@ -15,7 +15,6 @@ saveRDS(MSE, 'MSE/Stochastic.mse')
 HistFiles <- list.files('Hist')
 GridHistFiles <- HistFiles[!HistFiles %in% c("Base.hist", "Stochastic.hist")]
 
-
 for (i in seq_along(GridHistFiles)) {
   OMFile <- GridHistFiles[i]
   Hist <- readRDS(file.path('Hist', OMFile))

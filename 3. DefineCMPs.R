@@ -3,7 +3,9 @@
 SP_FMSY <- function(Data, MSY_frac=1, MaxChange=0.4, ...) {
   advice <- Advice()
 
-  do_Assessment <- SAMtool::SP(x = 1, Data = data2Data(Data))
+  data <- data2Data(Data, 'Survey')
+  data@Year <- data@Year[1:length(data@Cat[1,])]
+  do_Assessment <- SAMtool::SP(x = 1, Data = data)
   Rec <- SAMtool::HCR_MSY(Assessment = do_Assessment, MSY_frac = MSY_frac)
 
   NewTAC <- as.numeric(Rec@TAC)
@@ -37,7 +39,9 @@ class(SP_75FMSY) <- 'mp'
 
 IRatio <- function(Data, MaxChange=0.4) {
   advice <- Advice()
-  Rec <- DLMtool:::Iratio(1, data2Data(Data), reps=1)
+  data <- data2Data(Data, 'Survey')
+  data@Year <- data@Year[1:length(data@Cat[1,])]
+  Rec <- DLMtool::Iratio(1, data, reps=1)
   NewTAC <- as.numeric(Rec@TAC)
   LastTAC <- LastTAC(Data)
   if (!is.finite(NewTAC)) {
@@ -59,7 +63,9 @@ IRatio <- function(Data, MaxChange=0.4) {
 class(IRatio) <- 'mp'
 
 ISlope <- function(Data, MaxChange=0.4) {
-  Rec <- DLMtool::Islope1(1, data2Data(Data), reps=1, xx=0)
+  data <- data2Data(Data, 'Survey')
+  data@Year <- data@Year[1:length(data@Cat[1,])]
+  Rec <- DLMtool::Islope1(1, data, reps=1, xx=0)
   NewTAC <- as.numeric(Rec@TAC)
   LastTAC <- LastTAC(Data)
   if (!is.finite(NewTAC)) {
