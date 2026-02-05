@@ -1,7 +1,12 @@
 library(MSEtool)
 
 source('3. DefineCMPs.R')
-MPs <- avail('mp')
+MPs <- c("CC24000",
+         "CC28000",
+         "IRatio",
+         "ISlope",
+         "SP_75FMSY",
+         "SP_FMSY")   # avail('mp')
 
 # ----- Stochastic OM ------
 
