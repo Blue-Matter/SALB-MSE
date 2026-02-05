@@ -50,7 +50,9 @@ SSDir <- "G:/Shared drives/BM shared/1. Projects/TOF-MSE-SALB/ALB-S_Stochastic/A
 StochasticDirs <- list.dirs(file.path(SSDir), full.names = FALSE, recursive = FALSE)
 StochasticDirs <- StochasticDirs[!grepl('Base', StochasticDirs)]
 
-RepList <- ImportSSReport(SSDir=file.path(SSDir, StochasticDirs))
+use_multisession(workers = 10)
+
+RepList <- ImportSSReport(SSDir=file.path(SSDir, StochasticDirs)[1:20], parallel = TRUE)
 
 OM <- ImportSS(SSDir=RepList, 
                Name=Name,
