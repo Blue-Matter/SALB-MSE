@@ -13,6 +13,5 @@ for (i in seq_along(OMFiles)) {
 
   
   Hist <- Simulate(OM)
-  
-  saveRDS(Hist, file.path('Hist', histfile))
+  Save(Hist, file.path('Hist', histfile), overwrite=TRUE)
 }
