@@ -125,3 +125,67 @@ CC28000 <- function(Data) {
 }
 class(CC28000) <- 'mp'
 
+# ---- Stepped TAC ----
+
+# Based on MCC methods adopted for NSWO 
+
+MCC1 <- function(Data, tunepar = 1) {
+  
+  TACbase <- 20693 * tunepar # 2024 catch
+  
+  HistRefYears <- 2009:2012
+  Index <- Data@Survey@Value[,1]
+  ind <- match(HistRefYears, names(Index))
+  
+  Ibase <- mean(Index[ind], na.rm=TRUE)
+  
+  Icurr <- mean(tail(Index,3))
+  
+  Irat <- Icurr/Ibase
+  
+  fixed_low_TAC <- NULL  # initialize
+  
+  if (Irat>=1.70) {
+    deltaTAC <- 1.70
+  }
+  if (Irat>=1.60 & Irat<1.70) {
+    deltaTAC <- 1.60
+  }
+  if (Irat>=1.50 & Irat<1.60) {
+    deltaTAC <- 1.50
+  }
+  if (Irat>=1.40 & Irat<1.50) {
+    deltaTAC <- 1.40
+  }
+  if (Irat>=1.30 & Irat<1.40) {
+    deltaTAC <- 1.30
+  }
+  if (Irat>=1.20 & Irat<1.30) {
+    deltaTAC <- 1.20
+  }
+  if (Irat>=0.75 & Irat<1.20) {
+    deltaTAC <- 1
+  }
+  if (Irat>=0.5 & Irat<0.75) {
+    deltaTAC <- 0.75
+  }
+  if (Irat<0.5) {
+    fixed_low_TAC <- 5000
+  }
+  
+  if (is.null(fixed_low_TAC)) {
+    TAC <- TACbase * deltaTAC
+  } else {
+    TAC <- fixed_low_TAC
+  }
+  Advice(TAC=TAC)
+}
+class(MCC1) <- 'mp'
+
+MCC2 <- MCC1
+formals(MCC2)$tunepar <- 1.1
+class(MCC2) <- 'mp'
+
+
+
+

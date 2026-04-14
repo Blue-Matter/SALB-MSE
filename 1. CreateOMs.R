@@ -38,7 +38,22 @@ OM <- ImportSS(SSDir=SSDir,
 saveRDS(OM, file.path('OM', 'Base_Updated.om'))
 
 
+# Base Case OM Previous ----
 
+SSDir <- "G:/Shared drives/BM shared/1. Projects/TOF-MSE-SALB/ALB-S_Unc-Grid/ALB-S_Unc-Grid/ALB-S_h0.8_M0.35"
+
+OM <- ImportSS(SSDir=SSDir, 
+               Name=Name,
+               nSim=nSim, 
+               pYear = pYear,
+               Agency=Agency,
+               Region=Region,
+               StockName=StockName,
+               Species=Species,
+               Interval=Interval,
+               DataLag=DataLag)
+
+saveRDS(OM, file.path('OM', 'Base_Previous.om'))
 
 
 # Grid ----

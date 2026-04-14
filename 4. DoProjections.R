@@ -1,19 +1,17 @@
 library(MSEtool)
 
 source('3. DefineCMPs.R')
-MPs <- c("CC24000",
-         "CC28000",
-         "IRatio",
+MPs <- c("IRatio",
          "ISlope",
          "SP_75FMSY",
-         "SP_FMSY")   # avail('mp')
+         "SP_FMSY",
+         'MCC1',
+         'MCC2')   # avail('mp')
 
 # ----- Updated OM -----
 Hist <- readRDS('Hist/Base_Updated.hist')
-MSE <- Project(Hist, MPs)
-saveRDS(MSE, 'MSE/Base_Updated.mse')
-
-
+MSE <- Project(Hist, MPs, nSim=50)
+Save(MSE, 'MSE/Base_Updated.mse', overwrite = TRUE)
 
 
 # ----- Stochastic OM ------
