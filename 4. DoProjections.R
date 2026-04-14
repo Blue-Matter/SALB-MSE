@@ -8,6 +8,14 @@ MPs <- c("CC24000",
          "SP_75FMSY",
          "SP_FMSY")   # avail('mp')
 
+# ----- Updated OM -----
+Hist <- readRDS('Hist/Base_Updated.hist')
+MSE <- Project(Hist, MPs)
+saveRDS(MSE, 'MSE/Base_Updated.mse')
+
+
+
+
 # ----- Stochastic OM ------
 
 Hist <- readRDS('Hist/Stochastic.hist')

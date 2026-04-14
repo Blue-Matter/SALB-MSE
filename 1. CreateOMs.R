@@ -20,6 +20,27 @@ DataLag <- 1 # lagged by 1 year?
 
 source('Condition/LifeHistoryParameters.R')
 
+# Update Base Case OM ----
+
+SSDir <- "G:/Shared drives/BM shared/1. Projects/TOF-MSE-SALB/ALB_test__CHI_cpue_update"
+
+OM <- ImportSS(SSDir=SSDir, 
+               Name=Name,
+               nSim=nSim, 
+               pYear = pYear,
+               Agency=Agency,
+               Region=Region,
+               StockName=StockName,
+               Species=Species,
+               Interval=Interval,
+               DataLag=DataLag)
+
+saveRDS(OM, file.path('OM', 'Base_Updated.om'))
+
+
+
+
+
 # Grid ----
 
 GridDir <- 'G:/Shared drives/BM shared/1. Projects/TOF-MSE-SALB/ALB-S_Unc-Grid/ALB-S_Unc-Grid'
@@ -50,9 +71,9 @@ SSDir <- "G:/Shared drives/BM shared/1. Projects/TOF-MSE-SALB/ALB-S_Stochastic/A
 StochasticDirs <- list.dirs(file.path(SSDir), full.names = FALSE, recursive = FALSE)
 StochasticDirs <- StochasticDirs[!grepl('Base', StochasticDirs)]
 
-use_multisession(workers = 10)
 
-RepList <- ImportSSReport(SSDir=file.path(SSDir, StochasticDirs)[1:20], parallel = TRUE)
+SetupParallel()
+RepList <- ImportSSReport(SSDir=file.path(SSDir, StochasticDirs), parallel = TRUE)
 
 OM <- ImportSS(SSDir=RepList, 
                Name=Name,
@@ -64,6 +85,6 @@ OM <- ImportSS(SSDir=RepList,
                Species=Species,
                Interval=Interval,
                DataLag=DataLag,
-               Populate=FALSE)
+               Populate)
 
 saveRDS(OM, 'OM/Stochastic.om')

@@ -10,8 +10,6 @@ for (i in seq_along(OMFiles)) {
   
   OM <- readRDS(file.path("OM", omfile))
   
-
-  
   Hist <- Simulate(OM)
   Save(Hist, file.path('Hist', histfile), overwrite=TRUE)
 }

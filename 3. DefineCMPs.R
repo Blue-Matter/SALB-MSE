@@ -2,9 +2,16 @@
 # ----- Surplus Production Model ----
 SP_FMSY <- function(Data, MSY_frac=1, MaxChange=0.4, ...) {
   advice <- Advice()
-
-  data <- data2Data(Data, 'Survey')
+  
+  data <- new('Data')
+  data@Year <- Data@Years
+  data@LHYear <- Data@YearLH
+  data@Cat <- matrix(rowSums(Data@Landings@Value), 1, length(data@Year))
+  Index <- Data@Survey@Value[,1] # CTP-LL
+  data@Ind <- matrix(Index, 1, length(data@Year))
+  data@CV_Ind <- array(0.2, dim(data@Ind))
   data@Year <- data@Year[1:length(data@Cat[1,])]
+  
   do_Assessment <- SAMtool::SP(x = 1, Data = data)
   Rec <- SAMtool::HCR_MSY(Assessment = do_Assessment, MSY_frac = MSY_frac)
 
@@ -39,8 +46,15 @@ class(SP_75FMSY) <- 'mp'
 
 IRatio <- function(Data, MaxChange=0.4) {
   advice <- Advice()
-  data <- data2Data(Data, 'Survey')
+  
+  data <- new('Data')
+  data@Year <- Data@Years
+  data@LHYear <- Data@YearLH
+  data@Cat <- matrix(rowSums(Data@Landings@Value), 1, length(data@Year))
+  Index <- Data@Survey@Value[,1] # CTP-LL
+  data@Ind <- matrix(Index, 1, length(data@Year))
   data@Year <- data@Year[1:length(data@Cat[1,])]
+  
   Rec <- DLMtool::Iratio(1, data, reps=1)
   NewTAC <- as.numeric(Rec@TAC)
   LastTAC <- LastTAC(Data)
@@ -63,8 +77,15 @@ IRatio <- function(Data, MaxChange=0.4) {
 class(IRatio) <- 'mp'
 
 ISlope <- function(Data, MaxChange=0.4) {
-  data <- data2Data(Data, 'Survey')
+  
+  data <- new('Data')
+  data@Year <- Data@Years
+  data@LHYear <- Data@YearLH
+  data@Cat <- matrix(rowSums(Data@Landings@Value), 1, length(data@Year))
+  Index <- Data@Survey@Value[,1] # CTP-LL
+  data@Ind <- matrix(Index, 1, length(data@Year))
   data@Year <- data@Year[1:length(data@Cat[1,])]
+  
   Rec <- DLMtool::Islope1(1, data, reps=1, xx=0)
   NewTAC <- as.numeric(Rec@TAC)
   LastTAC <- LastTAC(Data)
